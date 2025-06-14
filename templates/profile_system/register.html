@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Global Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8" data-aos="fade-up">
+        <div class="card">
+            <div class="card-header text-center py-4">
+                <h4 class="mb-0">Create Your Account</h4>
+                <p class="text-muted mb-0">Join the Gabon Special Economic Zone community</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate class="needs-validation">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-12 mb-3">
+                            <h5 class="border-bottom pb-2"><i class="fas fa-user me-2"></i> Personal Information</h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                {{ form.first_name }}
+                            </div>
+                            {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.first_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                {{ form.last_name }}
+                            </div>
+                            {% if form.last_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.last_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12 mb-3">
+                            <h5 class="border-bottom pb-2"><i class="fas fa-sign-in-alt me-2"></i> Account Information</h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">Username*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-circle"></i></span>
+                                {{ form.username }}
+                            </div>
+                            {% if form.username.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.username.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Choose a unique username for your account.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email Address*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                {{ form.email }}
+                            </div>
+                            {% if form.email.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.email.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">We'll never share your email with anyone else.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12 mb-3">
+                            <h5 class="border-bottom pb-2"><i class="fas fa-lock me-2"></i> Security</h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">Password*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                {{ form.password1 }}
+                            </div>
+                            {% if form.password1.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.password1.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Your password must be at least 8 characters long.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                {{ form.password2 }}
+                            </div>
+                            {% if form.password2.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.password2.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Enter the same password as before, for verification.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">
+                                    I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary py-2">
+                            <i class="fas fa-user-plus me-2"></i> Create Account
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="mb-0">Already have an account? <a href="{% url 'login' %}" class="text-primary fw-bold">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap form-control class to form inputs
+        const inputs = [
+            '{{ form.first_name.id_for_label }}',
+            '{{ form.last_name.id_for_label }}',
+            '{{ form.username.id_for_label }}',
+            '{{ form.email.id_for_label }}',
+            '{{ form.password1.id_for_label }}',
+            '{{ form.password2.id_for_label }}'
+        ];
+        
+        inputs.forEach(function(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.classList.add('form-control');
+            }
+        });
+        
+        // Add placeholders
+        document.getElementById('{{ form.first_name.id_for_label }}').setAttribute('placeholder', 'Enter your first name');
+        document.getElementById('{{ form.last_name.id_for_label }}').setAttribute('placeholder', 'Enter your last name');
+        document.getElementById('{{ form.username.id_for_label }}').setAttribute('placeholder', 'Choose a username');
+        document.getElementById('{{ form.email.id_for_label }}').setAttribute('placeholder', 'Enter your email address');
+        document.getElementById('{{ form.password1.id_for_label }}').setAttribute('placeholder', 'Create a password');
+        document.getElementById('{{ form.password2.id_for_label }}').setAttribute('placeholder', 'Confirm your password');
+        
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity() || !document.getElementById('termsCheck').checked) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+{% endblock %} 

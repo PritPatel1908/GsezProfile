@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile Details - Global Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Profile Details</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Profile Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card profile-card" data-aos="fade-up">
+            <div class="profile-header">
+                <div class="container">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="profile-img-container">
+                                {% if profile.photo %}
+                                <img src="{{ profile.photo.url }}" alt="Profile Photo" class="profile-img">
+                                {% else %}
+                                <div class="profile-img d-flex align-items-center justify-content-center bg-light">
+                                    <i class="fas fa-user fa-4x text-secondary"></i>
+                                </div>
+                                {% endif %}
+                                <div class="profile-status {{ profile.status }}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h2 class="mb-1">{{ profile.user.get_full_name }}</h2>
+                            <p class="mb-3 opacity-75">GSEZ ID: {{ profile.gsez_id }}</p>
+                            <div class="d-flex flex-wrap gap-3">
+                                {% if user == profile.user or user.is_staff %}
+                                <a href="{% url 'edit_profile' profile.gsez_id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit me-2"></i> Edit Profile
+                                </a>
+                                <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                                {% endif %}
+                                {% if profile.qr_code %}
+                                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#qrCodeModal">
+                                    <i class="fas fa-qrcode me-2"></i> Show QR Code
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-details">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-info-circle me-2"></i> Personal Information</h5>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-flag"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Nationality</div>
+                                <div class="profile-detail-value">{{ profile.nationality }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-birthday-cake"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Date of Birth</div>
+                                <div class="profile-detail-value">{{ profile.date_of_birth }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Government ID</div>
+                                <div class="profile-detail-value">{{ profile.govt_id_number }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Emergency Contact</div>
+                                <div class="profile-detail-value">{{ profile.emergency_contact }}</div>
+                            </div>
+                        </div>
+                        {% if profile.govt_id_scan %}
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Government ID Scan</div>
+                                <div class="profile-detail-value">
+                                    <a href="{{ profile.govt_id_scan.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-download me-1"></i> View Document
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-id-badge me-2"></i> ID Information</h5>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Issue Date</div>
+                                <div class="profile-detail-value">{{ profile.issue_date }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Expiry Date</div>
+                                <div class="profile-detail-value">{{ profile.expiry_date }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Status</div>
+                                <div class="profile-detail-value">
+                                    <span class="badge bg-{{ profile.status }}">{{ profile.get_status_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Family Details -->
+{% if family_details %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" data-aos="fade-up">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i> Family Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Relationship</th>
+                                <th>Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for family in family_details %}
+                            <tr>
+                                <td>{{ family.name }}</td>
+                                <td>{{ family.relationship }}</td>
+                                <td>{{ family.contact }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Address Information -->
+{% if addresses %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" data-aos="fade-up">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i> Address Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for address in addresses %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">{% if address.is_current %}Current{% else %}Permanent{% endif %} Address</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>{{ address.address_line1 }}</p>
+                                {% if address.address_line2 %}<p>{{ address.address_line2 }}</p>{% endif %}
+                                <p>{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
+                                <p>{{ address.country }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Education -->
+{% if education %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" data-aos="fade-up">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i> Education</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Qualification</th>
+                                <th>Institution</th>
+                                <th>Year of Passing</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for edu in education %}
+                            <tr>
+                                <td>{{ edu.qualification }}</td>
+                                <td>{{ edu.institution }}</td>
+                                <td>{{ edu.year_of_passing }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Employment History -->
+{% if employments %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" data-aos="fade-up">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i> Employment History</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Position</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employment in employments %}
+                            <tr>
+                                <td>{{ employment.company.name }}</td>
+                                <td>{{ employment.position }}</td>
+                                <td>{{ employment.start_date }}</td>
+                                <td>{% if employment.is_current %}Present{% else %}{{ employment.end_date }}{% endif %}</td>
+                                <td>
+                                    {% if employment.is_current %}
+                                    <span class="badge bg-success">Current</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Previous</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- QR Code Modal -->
+{% if profile.qr_code %}
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrCodeModalLabel">Profile QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ profile.qr_code.url }}" alt="Profile QR Code" class="img-fluid">
+                <p class="mt-3">Scan this QR code to view this profile</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

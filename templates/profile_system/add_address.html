@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Current Address - Global Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Add Current Address</h4>
+            </div>
+            <div class="card-body">
+                <!-- Progress Indicator -->
+                <div class="progress mb-4">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">Step 3 of 5</div>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-map-marker-alt"></i> Current Address</h5>
+                        <p>Please provide your current address details. This address will be used for official communications.</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group mb-3">
+                                {{ form.address_line1.label_tag }}
+                                {{ form.address_line1 }}
+                                <small class="form-text text-muted">Required</small>
+                                {% if form.address_line1.errors %}
+                                <div class="invalid-feedback d-block">{{ form.address_line1.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group mb-3">
+                                {{ form.address_line2.label_tag }}
+                                {{ form.address_line2 }}
+                                <small class="form-text text-muted">Optional</small>
+                                {% if form.address_line2.errors %}
+                                <div class="invalid-feedback d-block">{{ form.address_line2.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.city.label_tag }}
+                                {{ form.city }}
+                                <small class="form-text text-muted">Required</small>
+                                {% if form.city.errors %}
+                                <div class="invalid-feedback d-block">{{ form.city.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.state.label_tag }}
+                                {{ form.state }}
+                                <small class="form-text text-muted">Required</small>
+                                {% if form.state.errors %}
+                                <div class="invalid-feedback d-block">{{ form.state.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.country.label_tag }}
+                                {{ form.country }}
+                                <small class="form-text text-muted">Required</small>
+                                {% if form.country.errors %}
+                                <div class="invalid-feedback d-block">{{ form.country.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form.postal_code.label_tag }}
+                                {{ form.postal_code }}
+                                <small class="form-text text-muted">Required</small>
+                                {% if form.postal_code.errors %}
+                                <div class="invalid-feedback d-block">{{ form.postal_code.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{ form.is_current }}
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="add_permanent" name="add_permanent">
+                        <label class="form-check-label" for="add_permanent">
+                            I want to add a permanent address (if different from current address)
+                        </label>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'add_family_details' %}" class="btn btn-outline-secondary">Back</a>
+                        <div>
+                            <a href="{% url 'add_education' %}" class="btn btn-outline-secondary me-2">Skip</a>
+                            <button type="submit" class="btn btn-primary">Continue</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

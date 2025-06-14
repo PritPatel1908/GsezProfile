@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Education - Global Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Add Education Details</h4>
+            </div>
+            <div class="card-body">
+                <!-- Progress Indicator -->
+                <div class="progress mb-4">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">Step 4 of 5</div>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-graduation-cap"></i> Education Information</h5>
+                        <p>Add your educational qualifications. You can add multiple qualifications. This information will be used for job applications.</p>
+                    </div>
+                    
+                    {{ formset.management_form }}
+                    
+                    <div id="education-forms">
+                        {% for form in formset %}
+                        <div class="education-form mb-4 p-3 border rounded">
+                            <h5 class="mb-3">Education #{{ forloop.counter }}</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        {{ form.qualification.label_tag }}
+                                        {{ form.qualification }}
+                                        <small class="form-text text-muted">Required</small>
+                                        {% if form.qualification.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.qualification.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        {{ form.institution.label_tag }}
+                                        {{ form.institution }}
+                                        <small class="form-text text-muted">Required</small>
+                                        {% if form.institution.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.institution.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        {{ form.year_of_passing.label_tag }}
+                                        {{ form.year_of_passing }}
+                                        <small class="form-text text-muted">Required</small>
+                                        {% if form.year_of_passing.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.year_of_passing.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    {% if formset.can_delete %}
+                                    <div class="form-check mb-3">
+                                        {{ form.DELETE }}
+                                        <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                            Delete this education
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% for hidden_field in form.hidden_fields %}
+                                {{ hidden_field }}
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" id="add-education" class="btn btn-secondary">
+                            <i class="fas fa-plus me-2"></i> Add Another Education
+                        </button>
+                        <div>
+                            <a href="{% url 'add_employment' %}" class="btn btn-outline-secondary me-2">Skip</a>
+                            <button type="submit" class="btn btn-primary">Continue to Employment</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Add new education form
+        $('#add-education').click(function() {
+            var formCount = parseInt($('#id_{{ formset.prefix }}-TOTAL_FORMS').val());
+            var newForm = $('.education-form:first').clone(true);
+            
+            // Update form count
+            $('#id_{{ formset.prefix }}-TOTAL_FORMS').val(formCount + 1);
+            
+            // Update form IDs and names
+            newForm.find(':input').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    name = name.replace('-0-', '-' + formCount + '-');
+                    $(this).attr('name', name);
+                }
+                
+                var id = $(this).attr('id');
+                if (id) {
+                    id = id.replace('-0-', '-' + formCount + '-');
+                    $(this).attr('id', id);
+                }
+            });
+            
+            // Update form labels
+            newForm.find('label').each(function() {
+                var forAttr = $(this).attr('for');
+                if (forAttr) {
+                    forAttr = forAttr.replace('-0-', '-' + formCount + '-');
+                    $(this).attr('for', forAttr);
+                }
+            });
+            
+            // Clear form values
+            newForm.find('input[type=text], select').val('');
+            newForm.find('input[type=checkbox]').prop('checked', false);
+            
+            // Update title
+            newForm.find('h5').text('Education #' + (formCount + 1));
+            
+            // Add new form to the page
+            $('#education-forms').append(newForm);
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% block title %}Global Profile - GSEZ Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section mb-5" data-aos="fade-up">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="display-4 fw-bold mb-4">Welcome to Global Profile</h1>
+                <p class="lead mb-4">The comprehensive identity and employment management system for the Gabon Special Economic Zone.</p>
+                <p class="mb-4">Manage your digital ID, employment history, and access permissions all in one secure platform.</p>
+                {% if not user.is_authenticated %}
+                <div class="d-flex gap-3">
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Register Now</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Login</a>
+                </div>
+                {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+                {% endif %}
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center">
+                <img src="/static/img/hero-image.svg" alt="Global Profile" class="img-fluid" style="max-height: 350px;" onerror="this.src='https://via.placeholder.com/500x350?text=Global+Profile';this.onerror='';">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container mb-5">
+    <div class="text-center mb-5" data-aos="fade-up">
+        <h2 class="fw-bold">Premium Features</h2>
+        <p class="lead text-muted">Discover the powerful features of our Global Profile system</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-id-badge"></i>
+                    </div>
+                    <h5 class="card-title mt-4">Digital ID Management</h5>
+                    <p class="card-text">Secure digital GSEZ ID with QR code for quick profile access and verification.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h5 class="card-title mt-4">Employment History</h5>
+                    <p class="card-text">Comprehensive record of current and previous employment within the GSEZ.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h5 class="card-title mt-4">Access Control</h5>
+                    <p class="card-text">Real-time status monitoring and zone entry management for enhanced security.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-search-location"></i>
+                    </div>
+                    <h5 class="card-title mt-4">Job Portal</h5>
+                    <p class="card-text">Find and apply for jobs within the GSEZ using your verified profile.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h5 class="card-title mt-4">Education Verification</h5>
+                    <p class="card-text">Store and verify your educational qualifications and certifications.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-language"></i>
+                    </div>
+                    <h5 class="card-title mt-4">Multi-language Support</h5>
+                    <p class="card-text">Access the platform in both English and French languages.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="bg-light py-5 mb-5">
+    <div class="container" data-aos="fade-up">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">How It Works</h2>
+            <p class="lead text-muted">Simple steps to get started with Global Profile</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="m-0">1</h3>
+                        </div>
+                        <h5>Register</h5>
+                        <p>Create your account with basic information</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="m-0">2</h3>
+                        </div>
+                        <h5>Complete Profile</h5>
+                        <p>Add your personal and professional details</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="m-0">3</h3>
+                        </div>
+                        <h5>Get Verified</h5>
+                        <p>Receive your digital GSEZ ID with QR code</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="400">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="m-0">4</h3>
+                        </div>
+                        <h5>Access Services</h5>
+                        <p>Use your profile for zone access and job applications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="container mb-5" data-aos="fade-up">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">GSEZ at a Glance</h2>
+        <p class="lead text-muted">Our growing community of professionals</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="stat-card">
+                <div class="stat-value" data-target="{{ profile_count }}">{{ profile_count }}</div>
+                <div class="stat-label">Registered Profiles</div>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="stat-card">
+                <div class="stat-value" data-target="{{ company_count }}">{{ company_count }}</div>
+                <div class="stat-label">Companies</div>
+                <div class="stat-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="stat-card">
+                <div class="stat-value" data-target="{{ job_count }}">{{ job_count }}</div>
+                <div class="stat-label">Active Job Postings</div>
+                <div class="stat-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Testimonials Section -->
+<div class="bg-light py-5 mb-5">
+    <div class="container" data-aos="fade-up">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">What Our Users Say</h2>
+            <p class="lead text-muted">Testimonials from GSEZ professionals</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text">"Global Profile has streamlined our hiring process. We can now verify candidates' employment history instantly, saving us time and resources."</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <span class="fw-bold">JD</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">John Doe</h6>
+                                <small class="text-muted">HR Manager, ABC Company</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text">"The QR code system makes zone access quick and secure. I can enter different facilities without any hassle, showing my profile instantly."</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <span class="fw-bold">JS</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Jane Smith</h6>
+                                <small class="text-muted">Engineer, XYZ Corporation</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        </div>
+                        <p class="card-text">"I found my current job through the Global Profile job portal. The application process was seamless since my verified profile was already in the system."</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <span class="fw-bold">RJ</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Robert Johnson</h6>
+                                <small class="text-muted">Project Manager, DEF Industries</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="container mb-5">
+    <div class="card" data-aos="fade-up">
+        <div class="card-body p-5 text-center">
+            <h2 class="fw-bold mb-4">Ready to Get Started?</h2>
+            <p class="lead mb-4">Join thousands of professionals in the Gabon Special Economic Zone</p>
+            {% if not user.is_authenticated %}
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Register Now</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg">Login</a>
+            </div>
+            {% else %}
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

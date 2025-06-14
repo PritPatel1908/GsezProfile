@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Global Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+{% if profile %}
+<!-- Profile Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card profile-card" data-aos="fade-up">
+            <div class="profile-header">
+                <div class="container">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="profile-img-container">
+                                {% if profile.photo %}
+                                <img src="{{ profile.photo.url }}" alt="Profile Photo" class="profile-img">
+                                {% else %}
+                                <div class="profile-img d-flex align-items-center justify-content-center bg-light">
+                                    <i class="fas fa-user fa-4x text-secondary"></i>
+                                </div>
+                                {% endif %}
+                                <div class="profile-status {{ profile.status }}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h2 class="mb-1">{{ user.get_full_name }}</h2>
+                            <p class="mb-3 opacity-75">GSEZ ID: {{ profile.gsez_id }}</p>
+                            <div class="d-flex flex-wrap gap-3">
+                                <a href="{% url 'profile_detail' profile.gsez_id %}" class="btn btn-light btn-sm">
+                                    <i class="fas fa-user me-2"></i> View Full Profile
+                                </a>
+                                <a href="{% url 'edit_profile' profile.gsez_id %}" class="btn btn-light btn-sm">
+                                    <i class="fas fa-edit me-2"></i> Edit Profile
+                                </a>
+                                <a href="{% url 'job_list' %}" class="btn btn-light btn-sm">
+                                    <i class="fas fa-briefcase me-2"></i> Browse Jobs
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-details">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-info-circle me-2"></i> Personal Information</h5>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-flag"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Nationality</div>
+                                <div class="profile-detail-value">{{ profile.nationality }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-birthday-cake"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Date of Birth</div>
+                                <div class="profile-detail-value">{{ profile.date_of_birth }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Government ID</div>
+                                <div class="profile-detail-value">{{ profile.govt_id_number }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-id-badge me-2"></i> GSEZ ID Information</h5>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Issue Date</div>
+                                <div class="profile-detail-value">{{ profile.issue_date }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Expiry Date</div>
+                                <div class="profile-detail-value">{{ profile.expiry_date }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <div class="profile-detail-icon">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div class="profile-detail-content">
+                                <div class="profile-detail-label">Emergency Contact</div>
+                                <div class="profile-detail-value">{{ profile.emergency_contact }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <h5><i class="fas fa-briefcase me-2"></i> Current Employment</h5>
+                        {% if current_employment %}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="profile-detail-item">
+                                            <div class="profile-detail-icon">
+                                                <i class="fas fa-building"></i>
+                                            </div>
+                                            <div class="profile-detail-content">
+                                                <div class="profile-detail-label">Company</div>
+                                                <div class="profile-detail-value">{{ current_employment.company.name }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="profile-detail-item">
+                                            <div class="profile-detail-icon">
+                                                <i class="fas fa-user-tie"></i>
+                                            </div>
+                                            <div class="profile-detail-content">
+                                                <div class="profile-detail-label">Designation</div>
+                                                <div class="profile-detail-value">{{ current_employment.designation }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="profile-detail-item">
+                                            <div class="profile-detail-icon">
+                                                <i class="fas fa-sitemap"></i>
+                                            </div>
+                                            <div class="profile-detail-content">
+                                                <div class="profile-detail-label">Department</div>
+                                                <div class="profile-detail-value">{{ current_employment.department }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="profile-detail-item">
+                                            <div class="profile-detail-icon">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </div>
+                                            <div class="profile-detail-content">
+                                                <div class="profile-detail-label">Join Date</div>
+                                                <div class="profile-detail-value">{{ current_employment.join_date }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No current employment record found.
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h5><i class="fas fa-qrcode me-2"></i> QR Code</h5>
+                        <div class="qr-container">
+                            {% if profile.qr_code %}
+                            <img src="{{ profile.qr_code.url }}" alt="QR Code" class="qr-code">
+                            <p class="mt-2 small text-muted">Scan to verify identity</p>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i> QR code not generated.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Applications -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" data-aos="fade-up">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i> Recent Job Applications</h5>
+                <a href="{% url 'job_list' %}" class="btn btn-sm btn-primary">Browse Jobs</a>
+            </div>
+            <div class="card-body">
+                {% if job_applications %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Job Title</th>
+                                <th>Company</th>
+                                <th>Applied Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for application in job_applications %}
+                            <tr>
+                                <td>{{ application.job.title }}</td>
+                                <td>{{ application.job.company.name }}</td>
+                                <td>{{ application.application_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if application.status == 'accepted' %}success{% elif application.status == 'rejected' %}danger{% elif application.status == 'shortlisted' %}info{% else %}secondary{% endif %}">
+                                        {{ application.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'job_detail' application.job.id %}" class="btn btn-sm btn-outline-primary">View Job</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                    <h5>No Job Applications Yet</h5>
+                    <p class="text-muted">You haven't applied for any jobs yet.</p>
+                    <a href="{% url 'job_list' %}" class="btn btn-primary">Browse Jobs</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" data-aos="fade-up">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{% url 'edit_profile' profile.gsez_id %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <i class="fas fa-user-edit fa-2x text-primary mb-3"></i>
+                                <h6>Update Profile</h6>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'job_list' %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <i class="fas fa-search fa-2x text-primary mb-3"></i>
+                                <h6>Find Jobs</h6>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'profile_detail' profile.gsez_id %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <i class="fas fa-id-card fa-2x text-primary mb-3"></i>
+                                <h6>View ID Card</h6>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <i class="fas fa-question-circle fa-2x text-primary mb-3"></i>
+                                <h6>Get Help</h6>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- No Profile Found -->
+<div class="row">
+    <div class="col-12">
+        <div class="card" data-aos="fade-up">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-user-slash fa-5x text-muted mb-4"></i>
+                <h3>Profile Not Found</h3>
+                <p class="lead mb-4">You need to create your profile to access all features of the Global Profile system.</p>
+                <a href="{% url 'create_profile' %}" class="btn btn-primary btn-lg">Create Profile</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 
