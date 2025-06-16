@@ -1,0 +1,384 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Verify Profile - {{ profile.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'admin_profiles' %}">Profiles</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'profile_detail' gsez_id=profile.gsez_id %}">{{ profile.gsez_id }}</a></li>
+                        <li class="breadcrumb-item active">Verify Profile</li>
+                    </ol>
+                </div>
+                <h4 class="page-title">Verify Profile: {{ profile.user.get_full_name }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Header with Stats -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h3 class="text-white mb-0">Profile Verification</h3>
+                        <p class="text-white-50 mb-0">Review and verify user profile information</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <a href="{% url 'profile_detail' gsez_id=profile.gsez_id %}" class="btn btn-light">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Summary Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if profile.photo %}
+                            <img src="{{ profile.photo.url }}" alt="Profile Photo" class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <div class="avatar-placeholder mx-auto" style="width: 120px; height: 120px; font-size: 2.5rem;">
+                                {{ profile.user.first_name|first }}{{ profile.user.last_name|first }}
+                            </div>
+                        {% endif %}
+                        <h4 class="mt-3 mb-0">{{ profile.user.get_full_name }}</h4>
+                        <p class="text-muted">{{ profile.gsez_id }}</p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            <span class="status-badge status-{{ profile.status }}">
+                                {{ profile.get_status_display }}
+                            </span>
+                            <span class="status-badge {% if profile.verification_status == 'verified' %}status-active{% elif profile.verification_status == 'rejected' %}status-blocked{% elif profile.verification_status == 'pending' %}status-surveillance{% else %}status-terminated{% endif %}">
+                                {{ profile.get_verification_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-completion mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="meta-label">Profile Completion</span>
+                            <span class="meta-value">{{ profile.get_completion_percentage }}%</span>
+                        </div>
+                        <div class="completion-bar">
+                            <div class="completion-progress" style="width: {{ profile.get_completion_percentage }}%;"></div>
+                        </div>
+                        {% if profile.is_draft %}
+                            <div class="text-center mt-2">
+                                <span class="status-badge status-surveillance">Draft</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Nationality</span>
+                        <span class="meta-value">{{ profile.nationality }}</span>
+                    </div>
+                    
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Date of Birth</span>
+                        <span class="meta-value">{{ profile.date_of_birth|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Government ID</span>
+                        <span class="meta-value">{{ profile.govt_id_number }}</span>
+                    </div>
+                    
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Issue Date</span>
+                        <span class="meta-value">{{ profile.issue_date|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Expiry Date</span>
+                        <span class="meta-value">{{ profile.expiry_date|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Emergency Contact</span>
+                        <span class="meta-value">{{ profile.emergency_contact }}</span>
+                    </div>
+                    
+                    {% if profile.verified_by %}
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Verified By</span>
+                        <span class="meta-value">{{ profile.verified_by.get_full_name }}</span>
+                    </div>
+                    
+                    <div class="meta-item mb-3">
+                        <span class="meta-label">Verified At</span>
+                        <span class="meta-value">{{ profile.verified_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Verification Form -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Profile Verification Form</h5>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.verification_status.id_for_label }}" class="form-label">Verification Status</label>
+                            {{ form.verification_status }}
+                            {% if form.verification_status.errors %}
+                                <div class="text-danger">{{ form.verification_status.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Select the appropriate verification status for this profile</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.verification_notes.id_for_label }}" class="form-label">Verification Notes</label>
+                            {{ form.verification_notes }}
+                            {% if form.verification_notes.errors %}
+                                <div class="text-danger">{{ form.verification_notes.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Add any notes or comments about this profile verification</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'profile_detail' gsez_id=profile.gsez_id %}" class="btn btn-light">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i> Update Verification Status
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Profile Data Sections -->
+            <div class="accordion mt-4" id="profileDataAccordion">
+                <!-- Family Details -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="familyDetailsHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#familyDetailsCollapse" aria-expanded="true" aria-controls="familyDetailsCollapse">
+                            <i class="bi bi-people me-2"></i> Family Details
+                        </button>
+                    </h2>
+                    <div id="familyDetailsCollapse" class="accordion-collapse collapse show" aria-labelledby="familyDetailsHeading" data-bs-parent="#profileDataAccordion">
+                        <div class="accordion-body">
+                            {% if family_details %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Relationship</th>
+                                                <th>Date of Birth</th>
+                                                <th>Contact</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for family in family_details %}
+                                                <tr>
+                                                    <td>{{ family.name }}</td>
+                                                    <td>{{ family.get_relationship_display }}</td>
+                                                    <td>{{ family.date_of_birth|date:"M d, Y" }}</td>
+                                                    <td>{{ family.contact_number }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i> No family details provided.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Address Information -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="addressHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#addressCollapse" aria-expanded="false" aria-controls="addressCollapse">
+                            <i class="bi bi-geo-alt me-2"></i> Address Information
+                        </button>
+                    </h2>
+                    <div id="addressCollapse" class="accordion-collapse collapse" aria-labelledby="addressHeading" data-bs-parent="#profileDataAccordion">
+                        <div class="accordion-body">
+                            {% if addresses %}
+                                {% for address in addresses %}
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">{{ address.is_current|yesno:"Current,Permanent" }} Address</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-1">{{ address.address_line1 }}</p>
+                                            {% if address.address_line2 %}<p class="mb-1">{{ address.address_line2 }}</p>{% endif %}
+                                            <p class="mb-1">{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
+                                            <p class="mb-0">{{ address.country }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i> No address information provided.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Education -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="educationHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#educationCollapse" aria-expanded="false" aria-controls="educationCollapse">
+                            <i class="bi bi-mortarboard me-2"></i> Education
+                        </button>
+                    </h2>
+                    <div id="educationCollapse" class="accordion-collapse collapse" aria-labelledby="educationHeading" data-bs-parent="#profileDataAccordion">
+                        <div class="accordion-body">
+                            {% if education %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Qualification</th>
+                                                <th>Institution</th>
+                                                <th>Year of Passing</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for edu in education %}
+                                                <tr>
+                                                    <td>{{ edu.qualification }}</td>
+                                                    <td>{{ edu.institution }}</td>
+                                                    <td>{{ edu.year_of_passing }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i> No education information provided.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Employment -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="employmentHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#employmentCollapse" aria-expanded="false" aria-controls="employmentCollapse">
+                            <i class="bi bi-briefcase me-2"></i> Employment History
+                        </button>
+                    </h2>
+                    <div id="employmentCollapse" class="accordion-collapse collapse" aria-labelledby="employmentHeading" data-bs-parent="#profileDataAccordion">
+                        <div class="accordion-body">
+                            {% if employments %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Company</th>
+                                                <th>Position</th>
+                                                <th>Start Date</th>
+                                                <th>End Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for employment in employments %}
+                                                <tr>
+                                                    <td>{{ employment.company_name }}</td>
+                                                    <td>{{ employment.position }}</td>
+                                                    <td>{{ employment.start_date|date:"M d, Y" }}</td>
+                                                    <td>{{ employment.end_date|date:"M d, Y"|default:"Present" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i> No employment history provided.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ID Documents -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="documentsHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#documentsCollapse" aria-expanded="false" aria-controls="documentsCollapse">
+                            <i class="bi bi-file-earmark-text me-2"></i> ID Documents
+                        </button>
+                    </h2>
+                    <div id="documentsCollapse" class="accordion-collapse collapse" aria-labelledby="documentsHeading" data-bs-parent="#profileDataAccordion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                {% if profile.govt_id_scan %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Government ID Scan</h6>
+                                            </div>
+                                            <div class="card-body text-center">
+                                                <a href="{{ profile.govt_id_scan.url }}" target="_blank" class="btn btn-primary">
+                                                    <i class="bi bi-file-earmark-text me-1"></i> View ID Document
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if profile.qr_code %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Profile QR Code</h6>
+                                            </div>
+                                            <div class="card-body text-center">
+                                                <img src="{{ profile.qr_code.url }}" alt="QR Code" class="img-fluid" style="max-width: 150px;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if not profile.govt_id_scan and not profile.qr_code %}
+                                    <div class="col-12">
+                                        <div class="alert alert-info mb-0">
+                                            <i class="bi bi-info-circle me-2"></i> No documents available.
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize any form elements that need JavaScript
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,752 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard | GSEZ Admin Panel{% endblock %}
+
+{% block dashboard_active %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+        box-shadow: 0 15px 30px rgba(67, 97, 238, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-header::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+    }
+    
+    .welcome-header::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 0;
+    }
+    
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-card {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: var(--transition);
+        border: none;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-users .stat-icon {
+        background-color: rgba(76, 201, 240, 0.1);
+        color: #4cc9f0;
+    }
+    
+    .stat-profiles .stat-icon {
+        background-color: rgba(67, 97, 238, 0.1);
+        color: #4361ee;
+    }
+    
+    .stat-companies .stat-icon {
+        background-color: rgba(247, 37, 133, 0.1);
+        color: #f72585;
+    }
+    
+    .stat-jobs .stat-icon {
+        background-color: rgba(58, 134, 255, 0.1);
+        color: #3a86ff;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-change {
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stat-change.positive {
+        color: #2ecc71;
+    }
+    
+    .stat-change.negative {
+        color: #e74c3c;
+    }
+    
+    .action-card {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: var(--transition);
+        border: none;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-right: 1rem;
+        transition: var(--transition);
+    }
+    
+    .action-card:hover .action-icon {
+        transform: scale(1.1);
+    }
+    
+    .action-users .action-icon {
+        background-color: rgba(76, 201, 240, 0.1);
+        color: #4cc9f0;
+    }
+    
+    .action-profiles .action-icon {
+        background-color: rgba(67, 97, 238, 0.1);
+        color: #4361ee;
+    }
+    
+    .action-companies .action-icon {
+        background-color: rgba(247, 37, 133, 0.1);
+        color: #f72585;
+    }
+    
+    .action-jobs .action-icon {
+        background-color: rgba(58, 134, 255, 0.1);
+        color: #3a86ff;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 9px;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--primary-color), transparent);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 25px;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-dot {
+        position: absolute;
+        left: -30px;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        z-index: 1;
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+    
+    .timeline-content {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+    }
+    
+    .timeline-content:hover {
+        transform: translateX(5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .timeline-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .table-row {
+        transition: var(--transition);
+    }
+    
+    .table-row:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+        transform: translateX(5px);
+    }
+    
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(67, 97, 238, 0.2);
+    }
+    
+    .chart-container {
+        height: 300px;
+        width: 100%;
+    }
+    
+    .system-status {
+        padding: 15px;
+        border-radius: 12px;
+        background-color: rgba(248, 249, 250, 0.8);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: var(--transition);
+    }
+    
+    .system-status:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .status-label {
+        font-weight: 500;
+    }
+    
+    .status-value {
+        font-weight: 600;
+    }
+    
+    .status-bar {
+        height: 6px;
+        border-radius: 3px;
+        background-color: #e9ecef;
+        margin-top: 5px;
+        overflow: hidden;
+    }
+    
+    .status-progress {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+    
+    .server-info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(243, 244, 246, 0.5);
+    }
+    
+    .server-info-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: #6c757d;
+    }
+    
+    .info-value {
+        font-weight: 500;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(67, 97, 238, 0.1);
+        color: var(--primary-color);
+        font-size: 1rem;
+        margin-right: 10px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="welcome-header" data-aos="fade-down">
+    <div class="welcome-content">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="mb-2">Welcome, {{ request.user.get_full_name }}!</h1>
+                <p class="mb-0 lead">Here's what's happening with your GSEZ system today</p>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                <div class="d-flex justify-content-md-end align-items-center">
+                    <div class="me-4">
+                        <p class="mb-1 text-white-50">Current Date</p>
+                        <h5 class="mb-0">{{ today|date:"F d, Y" }}</h5>
+                    </div>
+                    <div>
+                        <p class="mb-1 text-white-50">Active Users</p>
+                        <h5 class="mb-0">{{ active_users_count }} Online</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row" data-aos="fade-up">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stat-card stat-users">
+            <div class="card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-value">{{ user_count }}</div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-arrow-up-right me-1"></i>
+                    <span>{{ user_growth }}% this month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stat-card stat-profiles">
+            <div class="card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-person-vcard"></i>
+                </div>
+                <div class="stat-value">{{ profile_count }}</div>
+                <div class="stat-label">Active Profiles</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-arrow-up-right me-1"></i>
+                    <span>{{ profile_growth }}% this month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stat-card stat-companies">
+            <div class="card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stat-value">{{ company_count }}</div>
+                <div class="stat-label">Companies</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-arrow-up-right me-1"></i>
+                    <span>{{ company_growth }}% this month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stat-card stat-jobs">
+            <div class="card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+                <div class="stat-value">{{ job_count }}</div>
+                <div class="stat-label">Active Jobs</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-arrow-up-right me-1"></i>
+                    <span>{{ job_growth }}% this month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions and Recent Activities -->
+<div class="row" data-aos="fade-up" data-aos-delay="100">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="card-header-icon">
+                        <i class="bi bi-lightning"></i>
+                    </div>
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary">View All</button>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card action-card action-users">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="action-icon">
+                                        <i class="bi bi-person-plus"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Add New User</h6>
+                                        <p class="mb-0 small text-muted">Create a new system user</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'admin_user_create' %}" class="btn btn-sm btn-primary w-100">Create User</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card action-card action-profiles">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="action-icon">
+                                        <i class="bi bi-person-vcard"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Create Profile</h6>
+                                        <p class="mb-0 small text-muted">Register a new profile</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'admin_profile_create' %}" class="btn btn-sm btn-primary w-100">Create Profile</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card action-card action-companies">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="action-icon">
+                                        <i class="bi bi-building-add"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Add Company</h6>
+                                        <p class="mb-0 small text-muted">Register a new company</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'admin_company_create' %}" class="btn btn-sm btn-primary w-100">Add Company</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card action-card action-jobs">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="action-icon">
+                                        <i class="bi bi-briefcase"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Post Job</h6>
+                                        <p class="mb-0 small text-muted">Create a new job posting</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'admin_job_create' %}" class="btn btn-sm btn-primary w-100">Post Job</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="card-header-icon">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <h5 class="mb-0">Recent Activities</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary">View All</button>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for log in recent_access_logs|slice:":5" %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-time">{{ log.timestamp|date:"M d, Y - H:i" }}</div>
+                            <div class="d-flex align-items-center">
+                                <img src="{% if log.profile.photo %}{{ log.profile.photo.url }}{% else %}https://via.placeholder.com/30{% endif %}" alt="{{ log.profile.user.get_full_name }}" class="user-avatar me-2">
+                                <div>
+                                    <h6 class="mb-0">{{ log.profile.user.get_full_name }}</h6>
+                                    <p class="mb-0 small text-muted">{{ log.access_type }} at {{ log.location }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <p class="mb-0">No recent activities</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Profiles and System Status -->
+<div class="row" data-aos="fade-up" data-aos-delay="200">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="card-header-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h5 class="mb-0">Recently Added Profiles</h5>
+                </div>
+                <a href="{% url 'admin_profiles' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Profile</th>
+                                <th>GSEZ ID</th>
+                                <th>Nationality</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for profile in recent_profiles %}
+                            <tr class="table-row">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{% if profile.photo %}{{ profile.photo.url }}{% else %}https://via.placeholder.com/40{% endif %}" alt="{{ profile.user.get_full_name }}" class="user-avatar me-2" style="width: 30px; height: 30px;">
+                                        <div>
+                                            <h6 class="mb-0">{{ profile.user.get_full_name }}</h6>
+                                            <small class="text-muted">{{ profile.nationality }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ profile.gsez_id }}</td>
+                                <td>{{ profile.nationality }}</td>
+                                <td>
+                                    {% if profile.status == 'active' %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% elif profile.status == 'blocked' %}
+                                        <span class="badge bg-danger">Blocked</span>
+                                    {% elif profile.status == 'terminated' %}
+                                        <span class="badge bg-secondary">Terminated</span>
+                                    {% elif profile.status == 'surveillance' %}
+                                        <span class="badge bg-warning">Surveillance</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'profile_detail' profile.gsez_id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">No profiles found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="card-header-icon">
+                        <i class="bi bi-pc-display"></i>
+                    </div>
+                    <h5 class="mb-0">System Status</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="system-status">
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">CPU Usage</div>
+                            <div class="status-bar">
+                                <div class="status-progress" style="width: 45%"></div>
+                            </div>
+                        </div>
+                        <div class="status-value">45%</div>
+                    </div>
+                </div>
+                
+                <div class="system-status">
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">Memory Usage</div>
+                            <div class="status-bar">
+                                <div class="status-progress" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        <div class="status-value">65%</div>
+                    </div>
+                </div>
+                
+                <div class="system-status">
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">Disk Usage</div>
+                            <div class="status-bar">
+                                <div class="status-progress" style="width: 30%"></div>
+                            </div>
+                        </div>
+                        <div class="status-value">30%</div>
+                    </div>
+                </div>
+                
+                <div class="system-status">
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">Database Size</div>
+                            <div class="status-bar">
+                                <div class="status-progress" style="width: 25%"></div>
+                            </div>
+                        </div>
+                        <div class="status-value">25%</div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6 class="mb-3 d-flex align-items-center">
+                        <i class="bi bi-info-circle me-2 text-primary"></i>
+                        Server Information
+                    </h6>
+                    <div class="server-info-item">
+                        <span class="info-label">Django Version:</span>
+                        <span class="info-value">4.2.2</span>
+                    </div>
+                    <div class="server-info-item">
+                        <span class="info-label">Python Version:</span>
+                        <span class="info-value">3.11.7</span>
+                    </div>
+                    <div class="server-info-item">
+                        <span class="info-label">Database:</span>
+                        <span class="info-value">SQLite</span>
+                    </div>
+                    <div class="server-info-item">
+                        <span class="info-label">Last Backup:</span>
+                        <span class="info-value">{{ today|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any additional JavaScript for the dashboard here
+    });
+</script>
+{% endblock %}

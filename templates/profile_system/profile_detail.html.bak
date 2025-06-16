@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - {{ profile.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Profile</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user me-2"></i> Profile: {{ profile.user.get_full_name }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-4">
+                            {% if profile.photo %}
+                                <img src="{{ profile.photo.url }}" alt="Profile Photo" class="img-fluid rounded-circle profile-img mb-3" style="max-width: 150px; max-height: 150px;">
+                            {% else %}
+                                <img src="{% static 'images/default-avatar.png' %}" alt="Default Profile" class="img-fluid rounded-circle profile-img mb-3" style="max-width: 150px; max-height: 150px;">
+                            {% endif %}
+                            <h5>{{ profile.user.get_full_name }}</h5>
+                            <p class="text-muted">{{ profile.gsez_id }}</p>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-primary">{{ profile.get_completion_status_display }}</span>
+                                <span class="badge {% if profile.verification_status == 'verified' %}bg-success{% elif profile.verification_status == 'rejected' %}bg-danger{% elif profile.verification_status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ profile.get_verification_status_display }}
+                                </span>
+                                {% if profile.is_draft %}
+                                    <span class="badge bg-warning">Draft</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ completion_percentage }}%;" aria-valuenow="{{ completion_percentage }}" aria-valuemin="0" aria-valuemax="100">{{ completion_percentage }}%</div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'edit_profile' gsez_id=profile.gsez_id %}" class="btn btn-primary">
+                                    <i class="fas fa-edit me-1"></i> Edit Profile
+                                </a>
+                                
+                                {% if can_verify %}
+                                <a href="{% url 'verify_profile' gsez_id=profile.gsez_id %}" class="btn btn-success">
+                                    <i class="fas fa-user-check me-1"></i> Verify Profile
+                                </a>
+                                {% endif %}
+                                
+                                {% if profile.qr_code %}
+                                <a href="{{ profile.qr_code.url }}" download class="btn btn-outline-secondary">
+                                    <i class="fas fa-qrcode me-1"></i> Download QR Code
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Basic Information</h5>
+                                    <table class="table table-bordered table-sm">
+                                        <tr>
+                                            <th>Full Name</th>
+                                            <td>{{ profile.user.get_full_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>GSEZ ID</th>
+                                            <td>{{ profile.gsez_id }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Nationality</th>
+                                            <td>{{ profile.nationality }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Date of Birth</th>
+                                            <td>{{ profile.date_of_birth }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Govt ID Number</th>
+                                            <td>{{ profile.govt_id_number }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Emergency Contact</th>
+                                            <td>{{ profile.emergency_contact }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Issue Date</th>
+                                            <td>{{ profile.issue_date }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Expiry Date</th>
+                                            <td>{{ profile.expiry_date }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Status</th>
+                                            <td>
+                                                <span class="badge {% if profile.status == 'active' %}bg-success{% elif profile.status == 'blocked' %}bg-danger{% elif profile.status == 'terminated' %}bg-dark{% else %}bg-warning{% endif %}">
+                                                    {{ profile.get_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h5>Government ID</h5>
+                                    {% if profile.govt_id_scan %}
+                                        <div class="mb-3">
+                                            <a href="{{ profile.govt_id_scan.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-file-alt me-1"></i> View Government ID Scan
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> No government ID scan uploaded
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <h5 class="mt-4">QR Code</h5>
+                                    {% if profile.qr_code %}
+                                        <img src="{{ profile.qr_code.url }}" alt="QR Code" class="img-fluid" style="max-width: 150px;">
+                                    {% endif %}
+                                    
+                                    {% if profile.verification_status == 'verified' %}
+                                        <div class="alert alert-success mt-3">
+                                            <i class="fas fa-check-circle me-1"></i> 
+                                            <strong>Verified</strong> by {{ profile.verified_by.get_full_name }} on {{ profile.verified_at|date:"F d, Y" }}
+                                        </div>
+                                    {% elif profile.verification_status == 'rejected' %}
+                                        <div class="alert alert-danger mt-3">
+                                            <i class="fas fa-times-circle me-1"></i> 
+                                            <strong>Verification Rejected</strong>
+                                            {% if profile.verification_notes %}
+                                                <p class="mb-0 mt-2">{{ profile.verification_notes }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% elif profile.verification_status == 'pending' %}
+                                        <div class="alert alert-warning mt-3">
+                                            <i class="fas fa-clock me-1"></i> 
+                                            <strong>Verification Pending</strong>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <h5>Family Details</h5>
+                                    {% if family_details %}
+                                        <table class="table table-bordered table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Relationship</th>
+                                                    <th>Contact</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for family in family_details %}
+                                                    <tr>
+                                                        <td>{{ family.name }}</td>
+                                                        <td>{{ family.relationship }}</td>
+                                                        <td>{{ family.contact }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> No family details added
+                                            <a href="{% url 'add_family_details' gsez_id=profile.gsez_id %}" 
+                                               class="btn btn-sm btn-warning float-end">Add Family Details</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <h5>Addresses</h5>
+                                    {% if addresses %}
+                                        {% for address in addresses %}
+                                            <div class="card mb-3">
+                                                <div class="card-header">
+                                                    <strong>{{ address.is_current|yesno:"Current,Permanent" }} Address</strong>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p>{{ address.address_line1 }}<br>
+                                                    {% if address.address_line2 %}{{ address.address_line2 }}<br>{% endif %}
+                                                    {{ address.city }}, {{ address.state }}<br>
+                                                    {{ address.country }} - {{ address.postal_code }}</p>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> No addresses added
+                                            <a href="{% url 'add_address' gsez_id=profile.gsez_id %}" class="btn btn-sm btn-warning float-end">Add Address</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <h5>Education</h5>
+                                    {% if education %}
+                                        <table class="table table-bordered table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Qualification</th>
+                                                    <th>Institution</th>
+                                                    <th>Year of Passing</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for edu in education %}
+                                                    <tr>
+                                                        <td>{{ edu.qualification }}</td>
+                                                        <td>{{ edu.institution }}</td>
+                                                        <td>{{ edu.year_of_passing }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> No education details added
+                                            <a href="{% url 'add_education' gsez_id=profile.gsez_id %}" class="btn btn-sm btn-warning float-end">Add Education</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <h5>Employment</h5>
+                                    {% if employments %}
+                                        {% for employment in employments %}
+                                            <div class="card mb-3">
+                                                <div class="card-header">
+                                                    <strong>{{ employment.company.name }}</strong>
+                                                    <span class="badge {% if employment.is_current %}bg-success{% else %}bg-secondary{% endif %} float-end">
+                                                        {{ employment.is_current|yesno:"Current,Previous" }}
+                                                    </span>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p><strong>Designation:</strong> {{ employment.designation }}</p>
+                                                    <p><strong>Department:</strong> {{ employment.department }}</p>
+                                                    <p><strong>Employee Code:</strong> {{ employment.employee_code }}</p>
+                                                    <p><strong>Join Date:</strong> {{ employment.join_date }}</p>
+                                                    {% if not employment.is_current %}
+                                                        <p><strong>End Date:</strong> {{ employment.end_date }}</p>
+                                                    {% endif %}
+                                                    {% if employment.remarks %}
+                                                        <p><strong>Remarks:</strong> {{ employment.remarks }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> No employment details added
+                                            <a href="{% url 'add_employment' gsez_id=profile.gsez_id %}" class="btn btn-sm btn-warning float-end">Add Employment</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

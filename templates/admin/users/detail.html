@@ -1,0 +1,762 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ user.get_full_name }} | User Details | GSEZ Admin Panel{% endblock %}
+
+{% block users_active %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-profile-container {
+        margin-bottom: 30px;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 15px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+    }
+    
+    .profile-header::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 0;
+    }
+    
+    .profile-cover {
+        height: 150px;
+        border-radius: 12px;
+        background: linear-gradient(45deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%), url('https://images.unsplash.com/photo-1557683311-eac922347aa1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1080&q=80');
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        margin: -20px -20px 0;
+    }
+    
+    .profile-avatar-wrapper {
+        position: relative;
+        margin-top: -50px;
+        margin-bottom: 10px;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 15px;
+        border: 4px solid white;
+        object-fit: cover;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        background-color: #f8f9fa;
+    }
+    
+    .profile-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        background-color: white;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-active {
+        color: #2ecc71;
+    }
+    
+    .status-inactive {
+        color: #e74c3c;
+    }
+    
+    .profile-status i {
+        margin-right: 5px;
+    }
+    
+    .profile-info {
+        padding: 0 20px;
+        color: white;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .profile-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .profile-role {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 15px;
+    }
+    
+    .profile-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+    }
+    
+    .meta-item i {
+        margin-right: 6px;
+    }
+    
+    .profile-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+        padding-bottom: 10px;
+    }
+    
+    .action-btn {
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .btn-primary-soft {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    .btn-primary-soft:hover {
+        background-color: white;
+        color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    
+    .btn-danger-soft {
+        background-color: rgba(231, 76, 60, 0.2);
+        color: white;
+    }
+    
+    .btn-danger-soft:hover {
+        background-color: #e74c3c;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .action-btn i {
+        margin-right: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .info-tab-container {
+        background-color: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .info-tabs {
+        display: flex;
+        border-bottom: 1px solid #f1f1f1;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    
+    .info-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .info-tab {
+        padding: 15px 20px;
+        font-weight: 600;
+        color: #6c757d;
+        cursor: pointer;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .info-tab.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+    
+    .info-tab i {
+        margin-right: 8px;
+    }
+    
+    .tab-content {
+        padding: 20px;
+    }
+    
+    .tab-pane {
+        display: none;
+    }
+    
+    .tab-pane.active {
+        display: block;
+    }
+    
+    .info-section {
+        margin-bottom: 25px;
+    }
+    
+    .info-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #343a40;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .section-title i {
+        margin-right: 8px;
+        color: var(--primary-color);
+    }
+    
+    .edit-link {
+        font-size: 0.8rem;
+        color: var(--primary-color);
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .edit-link i {
+        margin-right: 4px;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    
+    .info-item {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+    }
+    
+    .info-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: #343a40;
+    }
+    
+    .badge-custom {
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .badge-role-admin {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .badge-role-staff {
+        background-color: rgba(155, 89, 182, 0.1);
+        color: #9b59b6;
+    }
+    
+    .badge-role-manager {
+        background-color: rgba(241, 196, 15, 0.1);
+        color: #f1c40f;
+    }
+    
+    .badge-role-user {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-point {
+        position: absolute;
+        left: -30px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        border: 2px solid white;
+    }
+    
+    .timeline-content {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+    }
+    
+    .timeline-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .timeline-text {
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .timeline-date {
+        font-size: 0.75rem;
+        color: #adb5bd;
+    }
+    
+    .permission-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+    }
+    
+    .permission-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .permission-item i {
+        color: var(--primary-color);
+        margin-right: 8px;
+    }
+    
+    .group-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        background-color: rgba(67, 97, 238, 0.1);
+        color: var(--primary-color);
+    }
+    
+    .empty-state {
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 2rem;
+        color: #dee2e6;
+        margin-bottom: 10px;
+    }
+    
+    @media (max-width: 767.98px) {
+        .profile-avatar-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .profile-status {
+            margin-top: 10px;
+        }
+        
+        .profile-meta {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="user-profile-container" data-aos="fade-down">
+    <div class="profile-header">
+        <div class="profile-cover"></div>
+        <div class="profile-avatar-wrapper">
+            <img src="{% if user.profile.photo %}{{ user.profile.photo.url }}{% else %}https://via.placeholder.com/100{% endif %}" alt="{{ user.get_full_name }}" class="profile-avatar">
+            <div class="profile-status {% if user.is_active %}status-active{% else %}status-inactive{% endif %}">
+                <i class="bi {% if user.is_active %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %}"></i>
+                <span>{% if user.is_active %}Active{% else %}Inactive{% endif %}</span>
+            </div>
+        </div>
+        
+        <div class="profile-info">
+            <h1 class="profile-name">{{ user.get_full_name }}</h1>
+            <div class="profile-role">
+                {% if user.is_superuser %}
+                    <i class="bi bi-shield-lock"></i> Administrator
+                {% elif user.is_staff %}
+                    <i class="bi bi-person-badge"></i> Staff
+                {% elif user.has_manager_role %}
+                    <i class="bi bi-briefcase"></i> Manager
+                {% else %}
+                    <i class="bi bi-person"></i> Regular User
+                {% endif %}
+            </div>
+            
+            <div class="profile-meta">
+                <div class="meta-item">
+                    <i class="bi bi-envelope"></i>
+                    <span>{{ user.email }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Joined {{ user.date_joined|date:"M d, Y" }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Last active {{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</span>
+                </div>
+                {% if user.profile.gsez_id %}
+                <div class="meta-item">
+                    <i class="bi bi-credit-card"></i>
+                    <span>ID: {{ user.profile.gsez_id }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="profile-actions">
+                <a href="{% url 'admin_user_edit' user.id %}" class="action-btn btn-primary-soft">
+                    <i class="bi bi-pencil"></i> Edit Profile
+                </a>
+                <a href="{% url 'admin_user_permissions' user.id %}" class="action-btn btn-primary-soft">
+                    <i class="bi bi-shield"></i> Permissions
+                </a>
+                <a href="{% url 'admin_user_password' user.id %}" class="action-btn btn-primary-soft">
+                    <i class="bi bi-key"></i> Password
+                </a>
+                {% if user.is_active %}
+                <a href="{% url 'admin_user_toggle_active' user.id %}" class="action-btn btn-danger-soft">
+                    <i class="bi bi-person-dash"></i> Deactivate
+                </a>
+                {% else %}
+                <a href="{% url 'admin_user_toggle_active' user.id %}" class="action-btn btn-primary-soft">
+                    <i class="bi bi-person-check"></i> Activate
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="info-tab-container">
+        <div class="info-tabs">
+            <div class="info-tab active" data-tab="personal">
+                <i class="bi bi-person"></i> Personal Info
+            </div>
+            <div class="info-tab" data-tab="professional">
+                <i class="bi bi-briefcase"></i> Professional
+            </div>
+            <div class="info-tab" data-tab="permissions">
+                <i class="bi bi-shield"></i> Permissions
+            </div>
+            <div class="info-tab" data-tab="activity">
+                <i class="bi bi-activity"></i> Activity
+            </div>
+        </div>
+        
+        <div class="tab-content">
+            <!-- Personal Info Tab -->
+            <div class="tab-pane active" id="personal">
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-person-lines-fill"></i> Personal Information</span>
+                        <a href="{% url 'admin_user_edit' user.id %}" class="edit-link">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Full Name</div>
+                            <div class="info-value">{{ user.get_full_name }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Username</div>
+                            <div class="info-value">{{ user.username }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ user.email }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Phone</div>
+                            <div class="info-value">{{ user.profile.phone|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Date of Birth</div>
+                            <div class="info-value">{{ user.profile.date_of_birth|date:"M d, Y"|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Gender</div>
+                            <div class="info-value">{{ user.profile.get_gender_display|default:"Not provided" }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-geo-alt"></i> Address Information</span>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Address</div>
+                            <div class="info-value">{{ user.profile.address|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">City</div>
+                            <div class="info-value">{{ user.profile.city|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Country</div>
+                            <div class="info-value">{{ user.profile.country|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Postal Code</div>
+                            <div class="info-value">{{ user.profile.postal_code|default:"Not provided" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Professional Tab -->
+            <div class="tab-pane" id="professional">
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-briefcase"></i> Professional Information</span>
+                        <a href="{% url 'admin_user_edit' user.id %}" class="edit-link">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Job Title</div>
+                            <div class="info-value">{{ user.profile.job_title|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Department</div>
+                            <div class="info-value">{{ user.profile.department|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Company</div>
+                            <div class="info-value">{{ user.profile.current_company|default:"Not provided" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Experience</div>
+                            <div class="info-value">{{ user.profile.years_of_experience|default:"0" }} years</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-tools"></i> Skills & Qualifications</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Skills</div>
+                        <div class="info-value">{{ user.profile.skills|default:"Not provided" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Permissions Tab -->
+            <div class="tab-pane" id="permissions">
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-person-check"></i> User Role</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-value">
+                            {% if user.is_superuser %}
+                                <span class="badge-custom badge-role-admin">
+                                    <i class="bi bi-shield-lock"></i> Administrator
+                                </span>
+                            {% elif user.is_staff %}
+                                <span class="badge-custom badge-role-staff">
+                                    <i class="bi bi-person-badge"></i> Staff
+                                </span>
+                            {% elif user.has_manager_role %}
+                                <span class="badge-custom badge-role-manager">
+                                    <i class="bi bi-briefcase"></i> Manager
+                                </span>
+                            {% else %}
+                                <span class="badge-custom badge-role-user">
+                                    <i class="bi bi-person"></i> Regular User
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-people"></i> User Groups</span>
+                        <a href="{% url 'admin_user_permissions' user.id %}" class="edit-link">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                    </div>
+                    
+                    {% if user.groups.all %}
+                        <div class="info-item">
+                            {% for group in user.groups.all %}
+                                <span class="group-badge">
+                                    <i class="bi bi-people-fill"></i> {{ group.name }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-people"></i>
+                            <p>User does not belong to any groups</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-shield-check"></i> User Permissions</span>
+                    </div>
+                    
+                    {% if user.user_permissions.all %}
+                        <div class="permission-list">
+                            {% for permission in user.user_permissions.all %}
+                                <div class="permission-item">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>{{ permission.name }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-shield-slash"></i>
+                            <p>No specific permissions assigned directly to this user</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Activity Tab -->
+            <div class="tab-pane" id="activity">
+                <div class="info-section">
+                    <div class="section-title">
+                        <span><i class="bi bi-clock-history"></i> Recent Activity</span>
+                    </div>
+                    
+                    {% if user_logs %}
+                        <div class="timeline">
+                            {% for log in user_logs %}
+                                <div class="timeline-item">
+                                    <div class="timeline-point"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">{{ log.action }}</div>
+                                        <div class="timeline-text">{{ log.details }}</div>
+                                        <div class="timeline-date">{{ log.timestamp|date:"M d, Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-clock"></i>
+                            <p>No activity recorded for this user</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.info-tab');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // Remove active class from all tabs and panes
+                tabs.forEach(t => t.classList.remove('active'));
+                tabPanes.forEach(p => p.classList.remove('active'));
+                
+                // Add active class to current tab and pane
+                this.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,652 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Create Profile for {{ user.get_full_name }} | GSEZ Admin Panel{% endblock %}
+
+{% block profiles_active %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-form-container {
+        margin-bottom: 30px;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden;
+        color: white;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+    }
+    
+    .profile-header::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 0;
+    }
+    
+    .profile-header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 15px;
+    }
+    
+    .breadcrumb-item a {
+        color: rgba(255, 255, 255, 0.8);
+        transition: all 0.2s ease;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: white;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item.active {
+        color: white;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .profile-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .profile-subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+    }
+    
+    .profile-card {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+    
+    .profile-card-header {
+        padding: 20px 25px;
+        border-bottom: 1px solid #f1f1f1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .profile-card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-card-title i {
+        margin-right: 10px;
+        color: var(--primary-color);
+    }
+    
+    .profile-card-body {
+        padding: 25px;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+    }
+    
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #343a40;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-right: 8px;
+        color: var(--primary-color);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 12px 15px;
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+    }
+    
+    .form-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .form-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        transform: translateY(-2px);
+    }
+    
+    .btn-outline-secondary {
+        color: #6c757d;
+        border-color: #6c757d;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .user-info-card {
+        background-color: #f8f9fa;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 15px;
+        object-fit: cover;
+        margin-bottom: 15px;
+    }
+    
+    .user-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .user-meta {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 3px;
+    }
+    
+    .user-meta i {
+        width: 20px;
+        color: var(--primary-color);
+    }
+    
+    .qr-info {
+        background-color: rgba(52, 152, 219, 0.1);
+        border-left: 4px solid #3498db;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    
+    .qr-title {
+        color: #3498db;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .qr-title i {
+        margin-right: 8px;
+    }
+    
+    .qr-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+    
+    .status-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .status-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .status-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .status-badge {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    
+    .status-active {
+        background-color: #2ecc71;
+        box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+    }
+    
+    .status-blocked {
+        background-color: #e74c3c;
+        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+    }
+    
+    .status-terminated {
+        background-color: #95a5a6;
+        box-shadow: 0 0 0 3px rgba(149, 165, 166, 0.2);
+    }
+    
+    .status-surveillance {
+        background-color: #f1c40f;
+        box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.2);
+    }
+    
+    .status-text {
+        font-size: 0.9rem;
+    }
+    
+    .status-label {
+        font-weight: 600;
+        color: #343a40;
+    }
+    
+    .status-desc {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    .file-upload-wrapper {
+        position: relative;
+        margin-bottom: 10px;
+    }
+    
+    .file-upload-info {
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .file-upload-info i {
+        margin-right: 5px;
+        color: var(--primary-color);
+    }
+    
+    @media (max-width: 767.98px) {
+        .form-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .form-buttons .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-form-container">
+    <div class="profile-header" data-aos="fade-down">
+        <div class="profile-header-content">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'admin_profiles' %}">Profile Management</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'admin_profile_create' %}">Create Profile</a></li>
+                    <li class="breadcrumb-item active">{{ user.get_full_name }}</li>
+                </ol>
+            </nav>
+            <h1 class="profile-title">Create Profile for {{ user.get_full_name }}</h1>
+            <p class="profile-subtitle">
+                Set up GSEZ ID and profile information for this user
+            </p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger mb-4">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Basic Information -->
+                <div class="profile-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="profile-card-header">
+                        <h5 class="profile-card-title">
+                            <i class="bi bi-person-badge"></i> Basic Information
+                        </h5>
+                    </div>
+                    <div class="profile-card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.gsez_id.id_for_label }}" class="form-label">GSEZ ID</label>
+                                <input type="text" name="{{ form.gsez_id.name }}" 
+                                       id="{{ form.gsez_id.id_for_label }}" 
+                                       class="form-control {% if form.gsez_id.errors %}is-invalid{% endif %}"
+                                       value="{{ form.gsez_id.value|default:'' }}" required>
+                                {% if form.gsez_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.gsez_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Unique identifier for the profile.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.nationality.id_for_label }}" class="form-label">Nationality</label>
+                                <input type="text" name="{{ form.nationality.name }}" 
+                                       id="{{ form.nationality.id_for_label }}" 
+                                       class="form-control {% if form.nationality.errors %}is-invalid{% endif %}"
+                                       value="{{ form.nationality.value|default:'' }}" required>
+                                {% if form.nationality.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.nationality.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                                <input type="date" name="{{ form.date_of_birth.name }}" 
+                                       id="{{ form.date_of_birth.id_for_label }}" 
+                                       class="form-control {% if form.date_of_birth.errors %}is-invalid{% endif %}"
+                                       value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}" required>
+                                {% if form.date_of_birth.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.date_of_birth.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.expiry_date.id_for_label }}" class="form-label">Expiry Date</label>
+                                <input type="date" name="{{ form.expiry_date.name }}" 
+                                       id="{{ form.expiry_date.id_for_label }}" 
+                                       class="form-control {% if form.expiry_date.errors %}is-invalid{% endif %}"
+                                       value="{{ form.expiry_date.value|date:'Y-m-d'|default:'' }}" required>
+                                {% if form.expiry_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.expiry_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Documents & Identification -->
+                <div class="profile-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="profile-card-header">
+                        <h5 class="profile-card-title">
+                            <i class="bi bi-file-earmark-text"></i> Documents & Identification
+                        </h5>
+                    </div>
+                    <div class="profile-card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.govt_id_number.id_for_label }}" class="form-label">Government ID Number</label>
+                                <input type="text" name="{{ form.govt_id_number.name }}" 
+                                       id="{{ form.govt_id_number.id_for_label }}" 
+                                       class="form-control {% if form.govt_id_number.errors %}is-invalid{% endif %}"
+                                       value="{{ form.govt_id_number.value|default:'' }}" required>
+                                {% if form.govt_id_number.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.govt_id_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.emergency_contact.id_for_label }}" class="form-label">Emergency Contact</label>
+                                <input type="text" name="{{ form.emergency_contact.name }}" 
+                                       id="{{ form.emergency_contact.id_for_label }}" 
+                                       class="form-control {% if form.emergency_contact.errors %}is-invalid{% endif %}"
+                                       value="{{ form.emergency_contact.value|default:'' }}" required>
+                                {% if form.emergency_contact.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.emergency_contact.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.photo.id_for_label }}" class="form-label">Profile Photo</label>
+                                <div class="file-upload-wrapper">
+                                    <input type="file" name="{{ form.photo.name }}" 
+                                           id="{{ form.photo.id_for_label }}" 
+                                           class="form-control {% if form.photo.errors %}is-invalid{% endif %}" required>
+                                    {% if form.photo.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.photo.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="file-upload-info">
+                                        <i class="bi bi-info-circle"></i>
+                                        Upload a clear passport-sized photo
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.govt_id_scan.id_for_label }}" class="form-label">Government ID Scan</label>
+                                <div class="file-upload-wrapper">
+                                    <input type="file" name="{{ form.govt_id_scan.name }}" 
+                                           id="{{ form.govt_id_scan.id_for_label }}" 
+                                           class="form-control {% if form.govt_id_scan.errors %}is-invalid{% endif %}" required>
+                                    {% if form.govt_id_scan.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.govt_id_scan.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="file-upload-info">
+                                        <i class="bi bi-info-circle"></i>
+                                        Upload a scan of the government ID
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status & Settings -->
+                <div class="profile-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="profile-card-header">
+                        <h5 class="profile-card-title">
+                            <i class="bi bi-shield-check"></i> Status & Settings
+                        </h5>
+                    </div>
+                    <div class="profile-card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Profile Status</label>
+                                <select name="{{ form.status.name }}" 
+                                       id="{{ form.status.id_for_label }}" 
+                                       class="form-select {% if form.status.errors %}is-invalid{% endif %}">
+                                    {% for value, text in form.status.field.choices %}
+                                        <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ text }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.status.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.status.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Current status of this profile in the system.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-buttons">
+                    <a href="{% url 'admin_profile_create' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Create Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- User Information -->
+            <div class="profile-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="profile-card-header">
+                    <h5 class="profile-card-title">
+                        <i class="bi bi-person"></i> User Information
+                    </h5>
+                </div>
+                <div class="profile-card-body">
+                    <div class="user-info-card">
+                        <img src="https://via.placeholder.com/80" alt="{{ user.get_full_name }}" class="user-avatar">
+                        <h5 class="user-name">{{ user.get_full_name }}</h5>
+                        <div class="user-meta">
+                            <i class="bi bi-person-badge"></i> {{ user.username }}
+                        </div>
+                        <div class="user-meta">
+                            <i class="bi bi-envelope"></i> {{ user.email }}
+                        </div>
+                        <div class="user-meta">
+                            <i class="bi bi-calendar3"></i> Joined {{ user.date_joined|date:"M d, Y" }}
+                        </div>
+                        
+                        <div class="qr-info">
+                            <div class="qr-title">
+                                <i class="bi bi-qr-code"></i> QR Code Generation
+                            </div>
+                            <p class="qr-text">A QR code will be automatically generated for this profile once created. This can be used for quick identification and access control.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status Information -->
+            <div class="profile-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="profile-card-header">
+                    <h5 class="profile-card-title">
+                        <i class="bi bi-info-circle"></i> Status Information
+                    </h5>
+                </div>
+                <div class="profile-card-body">
+                    <ul class="status-list">
+                        <li class="status-item">
+                            <span class="status-badge status-active"></span>
+                            <div>
+                                <div class="status-label">Active</div>
+                                <div class="status-desc">Profile is active and valid</div>
+                            </div>
+                        </li>
+                        <li class="status-item">
+                            <span class="status-badge status-blocked"></span>
+                            <div>
+                                <div class="status-label">Blocked</div>
+                                <div class="status-desc">Profile is temporarily blocked</div>
+                            </div>
+                        </li>
+                        <li class="status-item">
+                            <span class="status-badge status-terminated"></span>
+                            <div>
+                                <div class="status-label">Terminated</div>
+                                <div class="status-desc">Profile has been terminated</div>
+                            </div>
+                        </li>
+                        <li class="status-item">
+                            <span class="status-badge status-surveillance"></span>
+                            <div>
+                                <div class="status-label">Under Surveillance</div>
+                                <div class="status-desc">Profile is under surveillance</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

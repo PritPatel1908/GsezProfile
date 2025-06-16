@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import (
     Profile, FamilyDetail, Address, Company, 
-    Employment, Education, JobPosting, JobApplication
+    Employment, Education, JobPosting, JobApplication, UserRole
 )
 
 class UserRegistrationForm(UserCreationForm):
@@ -24,10 +24,27 @@ class UserRegistrationForm(UserCreationForm):
             user.save()
         return user
 
+class UserRoleForm(forms.ModelForm):
+    class Meta:
+        model = UserRole
+        fields = ('role',)
+        widgets = {
+            'role': forms.Select(attrs={'class': 'form-select'}),
+        }
+
 class ProfileForm(forms.ModelForm):
+    save_as_draft = forms.BooleanField(
+        required=False, 
+        initial=True,
+        label='Save as draft',
+        help_text='You can complete your profile later if you save it as draft.'
+    )
+    
     class Meta:
         model = Profile
-        exclude = ('user', 'qr_code', 'issue_date')
+        exclude = ('user', 'qr_code', 'issue_date', 'completion_status', 'verification_status', 
+                  'verification_notes', 'verified_by', 'verified_at', 'created_at', 'updated_at',
+                  'last_step_completed')
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'expiry_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -36,6 +53,7 @@ class ProfileForm(forms.ModelForm):
             'govt_id_number': forms.TextInput(attrs={'class': 'form-control'}),
             'emergency_contact': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
+            'is_draft': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -47,6 +65,11 @@ class ProfileForm(forms.ModelForm):
         if instance:
             self.fields['photo'].required = False
             self.fields['govt_id_scan'].required = False
+            self.fields['save_as_draft'].initial = instance.is_draft
+        else:
+            # Make photo and govt_id_scan not required for new profiles
+            self.fields['photo'].required = False
+            self.fields['govt_id_scan'].required = False
             
         # Pre-fill fields from user data if available
         if user and not instance:
@@ -54,6 +77,22 @@ class ProfileForm(forms.ModelForm):
             self.initial['gsez_id'] = f"GSEZ-{user.id:05d}"
             # Pre-fill emergency contact with user's email if no other data available
             self.initial['emergency_contact'] = user.email
+    
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        
+        # Handle is_draft based on save_as_draft field
+        profile.is_draft = self.cleaned_data.get('save_as_draft', True)
+        
+        # Update completion status to basic_info
+        if not profile.completion_status or profile.completion_status == 'not_started':
+            profile.completion_status = 'basic_info'
+            profile.last_step_completed = 'basic_info'
+        
+        if commit:
+            profile.save()
+        
+        return profile
 
 class FamilyDetailForm(forms.ModelForm):
     class Meta:
@@ -178,4 +217,14 @@ class JobSearchForm(forms.Form):
         widget=forms.TextInput(attrs={'placeholder': 'Search by Job Title or Company'})
     )
     location = forms.CharField(required=False, label='Location')
-    is_active = forms.BooleanField(required=False, label='Active Jobs Only', initial=True) 
+    is_active = forms.BooleanField(required=False, label='Active Jobs Only', initial=True)
+
+class ProfileVerificationForm(forms.Form):
+    verification_status = forms.ChoiceField(
+        choices=Profile.VERIFICATION_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    verification_notes = forms.CharField(
+        required=False, 
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
+    ) 

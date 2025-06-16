@@ -1,0 +1,653 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Profile Management | GSEZ Admin Panel{% endblock %}
+
+{% block profiles_active %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-container {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        margin-bottom: 30px;
+        color: white;
+        box-shadow: 0 15px 30px rgba(67, 97, 238, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .header-container::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+    }
+    
+    .header-container::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 0;
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .filter-section {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 15px 20px;
+        margin-top: 20px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .filter-title {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .filter-title i {
+        margin-right: 8px;
+    }
+    
+    .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .filter-group {
+        margin-right: 20px;
+    }
+    
+    .filter-badge {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 30px;
+        padding: 8px 18px;
+        margin-right: 10px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 10px;
+        text-decoration: none;
+        font-weight: 500;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .filter-badge:hover, .filter-badge.active {
+        background-color: white;
+        color: var(--primary-color);
+        text-decoration: none;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(255, 255, 255, 0.3);
+    }
+    
+    .filter-badge i {
+        margin-right: 8px;
+        font-size: 1rem;
+    }
+    
+    .profile-card {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: var(--transition);
+        border: none;
+        margin-bottom: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .profile-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-card-header {
+        position: relative;
+        padding: 20px;
+        border-bottom: 1px solid rgba(243, 244, 246, 0.5);
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 15px;
+        object-fit: cover;
+        margin-right: 15px;
+        border: 3px solid rgba(67, 97, 238, 0.1);
+        transition: var(--transition);
+    }
+    
+    .profile-card:hover .profile-avatar {
+        transform: scale(1.05);
+        border-color: var(--primary-color);
+    }
+    
+    .profile-info {
+        flex: 1;
+    }
+    
+    .profile-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+        transition: var(--transition);
+    }
+    
+    .profile-card:hover .profile-name {
+        color: var(--primary-color);
+    }
+    
+    .profile-gsez-id {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-gsez-id i {
+        margin-right: 5px;
+        color: var(--primary-color);
+        font-size: 0.85rem;
+    }
+    
+    .profile-meta {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 0;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        margin-right: 15px;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    
+    .meta-item i {
+        margin-right: 5px;
+        color: var(--primary-color);
+        font-size: 0.85rem;
+    }
+    
+    .profile-status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    
+    .status-active {
+        background-color: #2ecc71;
+        box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+    }
+    
+    .status-blocked {
+        background-color: #e74c3c;
+        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+    }
+    
+    .status-terminated {
+        background-color: #7f8c8d;
+        box-shadow: 0 0 0 3px rgba(127, 140, 141, 0.2);
+    }
+    
+    .status-surveillance {
+        background-color: #f1c40f;
+        box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.2);
+    }
+    
+    .profile-card-body {
+        padding: 20px;
+    }
+    
+    .profile-details {
+        margin-bottom: 20px;
+    }
+    
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(243, 244, 246, 0.5);
+    }
+    
+    .detail-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .detail-value {
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .profile-card-footer {
+        padding: 15px 20px;
+        border-top: 1px solid rgba(243, 244, 246, 0.5);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 5px;
+        transition: var(--transition);
+    }
+    
+    .action-view {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .action-view:hover {
+        background-color: #3498db;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
+    }
+    
+    .action-edit {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .action-edit:hover {
+        background-color: #2ecc71;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);
+    }
+    
+    .action-delete {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+    
+    .action-delete:hover {
+        background-color: #e74c3c;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(231, 76, 60, 0.2);
+    }
+    
+    .pagination {
+        margin-bottom: 0;
+    }
+    
+    .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .page-link {
+        color: var(--primary-color);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 0;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state h4 {
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+        color: #adb5bd;
+        max-width: 400px;
+        margin: 0 auto 20px;
+    }
+    
+    .dropdown-toggle::after {
+        display: none;
+    }
+    
+    .dropdown-menu {
+        min-width: 200px;
+    }
+    
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .dropdown-item i {
+        margin-right: 10px;
+        font-size: 1rem;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .profile-actions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+    
+    .profile-action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(243, 244, 246, 0.5);
+        color: #6c757d;
+        border: none;
+        transition: var(--transition);
+    }
+    
+    .profile-action-btn:hover {
+        background-color: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
+    }
+    
+    .qr-code {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-container" data-aos="fade-down">
+    <div class="header-content">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="mb-2">Profile Management</h1>
+                <p class="mb-0 lead">Manage all GSEZ ID profiles and their information</p>
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <form method="GET" action="{% url 'admin_profiles' %}">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control form-control-lg" placeholder="Search profiles..." value="{{ request.GET.search|default:'' }}">
+                        <button class="btn btn-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="filter-section">
+            <div class="filter-title">
+                <i class="bi bi-funnel-fill"></i> Filter Profiles
+            </div>
+            
+            <div class="filter-container">
+                <div class="filter-group">
+                    <div class="filter-title">By Status</div>
+                    <div>
+                        <a href="{% url 'admin_profiles' %}" class="filter-badge {% if not request.GET.status_filter %}active{% endif %}">
+                            <i class="bi bi-grid-3x3-gap"></i> All Status
+                        </a>
+                        <a href="{% url 'admin_profiles' %}?status_filter=active" class="filter-badge {% if request.GET.status_filter == 'active' %}active{% endif %}">
+                            <i class="bi bi-check-circle"></i> Active
+                        </a>
+                        <a href="{% url 'admin_profiles' %}?status_filter=blocked" class="filter-badge {% if request.GET.status_filter == 'blocked' %}active{% endif %}">
+                            <i class="bi bi-x-circle"></i> Blocked
+                        </a>
+                        <a href="{% url 'admin_profiles' %}?status_filter=terminated" class="filter-badge {% if request.GET.status_filter == 'terminated' %}active{% endif %}">
+                            <i class="bi bi-slash-circle"></i> Terminated
+                        </a>
+                        <a href="{% url 'admin_profiles' %}?status_filter=surveillance" class="filter-badge {% if request.GET.status_filter == 'surveillance' %}active{% endif %}">
+                            <i class="bi bi-eye"></i> Surveillance
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-title">By Nationality</div>
+                    <div>
+                        <a href="{% url 'admin_profiles' %}" class="filter-badge {% if not request.GET.nationality_filter %}active{% endif %}">
+                            <i class="bi bi-globe"></i> All Countries
+                        </a>
+                        <a href="{% url 'admin_profiles' %}?nationality_filter=Gabon" class="filter-badge {% if request.GET.nationality_filter == 'Gabon' %}active{% endif %}">
+                            <i class="bi bi-flag"></i> Gabon
+                        </a>
+                        <a href="{% url 'admin_profiles' %}?nationality_filter=Nigeria" class="filter-badge {% if request.GET.nationality_filter == 'Nigeria' %}active{% endif %}">
+                            <i class="bi bi-flag"></i> Nigeria
+                        </a>
+                        <a href="{% url 'admin_profiles' %}?nationality_filter=Ghana" class="filter-badge {% if request.GET.nationality_filter == 'Ghana' %}active{% endif %}">
+                            <i class="bi bi-flag"></i> Ghana
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            {% if request.GET.search or request.GET.status_filter or request.GET.nationality_filter %}
+            <div class="text-end mt-3">
+                <a href="{% url 'admin_profiles' %}" class="btn btn-sm btn-light">
+                    <i class="bi bi-x-circle me-1"></i> Clear All Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <div class="card-header-icon me-2">
+            <i class="bi bi-person-vcard"></i>
+        </div>
+        <h5 class="mb-0">{{ profiles.paginator.count }} Profiles Found</h5>
+    </div>
+    <a href="{% url 'admin_profile_create' %}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-2"></i>Create New Profile
+    </a>
+</div>
+
+{% if profiles %}
+<div class="row" data-aos="fade-up">
+    {% for profile in profiles %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card profile-card">
+            <div class="profile-card-header">
+                <img src="{% if profile.photo %}{{ profile.photo.url }}{% else %}https://via.placeholder.com/70{% endif %}" alt="{{ profile.user.get_full_name }}" class="profile-avatar">
+                <div class="profile-info">
+                    <h5 class="profile-name">{{ profile.user.get_full_name }}</h5>
+                    <div class="profile-gsez-id">
+                        <i class="bi bi-person-badge"></i>
+                        <span>{{ profile.gsez_id }}</span>
+                    </div>
+                    <div class="profile-meta">
+                        <div class="meta-item">
+                            <i class="bi bi-flag"></i>
+                            <span>{{ profile.nationality }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <div class="dropdown">
+                        <button class="profile-action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'profile_detail' profile.gsez_id %}"><i class="bi bi-eye"></i> View Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'edit_profile' profile.gsez_id %}"><i class="bi bi-pencil"></i> Edit Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-success" href="{% url 'admin_profile_status' profile.id 'active' %}"><i class="bi bi-check-circle"></i> Set Active</a></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'admin_profile_status' profile.id 'blocked' %}"><i class="bi bi-x-circle"></i> Block Profile</a></li>
+                            <li><a class="dropdown-item text-warning" href="{% url 'admin_profile_status' profile.id 'surveillance' %}"><i class="bi bi-eye"></i> Put Under Surveillance</a></li>
+                            <li><a class="dropdown-item text-secondary" href="{% url 'admin_profile_status' profile.id 'terminated' %}"><i class="bi bi-slash-circle"></i> Terminate Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'admin_profile_delete' profile.id %}"><i class="bi bi-trash"></i> Delete Profile</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <span class="badge {% if profile.status == 'active' %}bg-success{% elif profile.status == 'blocked' %}bg-danger{% elif profile.status == 'terminated' %}bg-secondary{% else %}bg-warning{% endif %}">
+                            {% if profile.status == 'active' %}<i class="bi bi-check-circle me-1"></i>{% endif %}
+                            {% if profile.status == 'blocked' %}<i class="bi bi-x-circle me-1"></i>{% endif %}
+                            {% if profile.status == 'terminated' %}<i class="bi bi-slash-circle me-1"></i>{% endif %}
+                            {% if profile.status == 'surveillance' %}<i class="bi bi-eye me-1"></i>{% endif %}
+                            {{ profile.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Date of Birth</span>
+                        <span class="detail-value">{{ profile.date_of_birth|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Issue Date</span>
+                        <span class="detail-value">{{ profile.issue_date|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Expiry Date</span>
+                        <span class="detail-value">{{ profile.expiry_date|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Emergency Contact</span>
+                        <span class="detail-value">{{ profile.emergency_contact }}</span>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    {% if profile.qr_code %}
+                    <img src="{{ profile.qr_code.url }}" alt="QR Code" class="qr-code">
+                    {% endif %}
+                </div>
+            </div>
+            <div class="profile-card-footer">
+                <a href="{% url 'profile_detail' profile.gsez_id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i>View Profile
+                </a>
+                <div>
+                    <a href="{% url 'edit_profile' profile.gsez_id %}" class="btn action-btn action-edit" title="Edit Profile">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{% url 'log_access' profile.gsez_id %}" class="btn action-btn action-view" title="Log Access">
+                        <i class="bi bi-shield-check"></i>
+                    </a>
+                    <a href="{% url 'admin_profile_delete' profile.id %}" class="btn action-btn action-delete" title="Delete Profile" onclick="return confirm('Are you sure you want to delete this profile?')">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+<div class="d-flex justify-content-center mt-4">
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if profiles.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.nationality_filter %}&nationality_filter={{ request.GET.nationality_filter }}{% endif %}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ profiles.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.nationality_filter %}&nationality_filter={{ request.GET.nationality_filter }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for i in profiles.paginator.page_range %}
+                {% if profiles.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                {% elif i > profiles.number|add:"-3" and i < profiles.number|add:"3" %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.nationality_filter %}&nationality_filter={{ request.GET.nationality_filter }}{% endif %}">{{ i }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if profiles.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ profiles.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.nationality_filter %}&nationality_filter={{ request.GET.nationality_filter }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ profiles.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.nationality_filter %}&nationality_filter={{ request.GET.nationality_filter }}{% endif %}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+{% else %}
+<div class="empty-state" data-aos="fade-up">
+    <i class="bi bi-person-x"></i>
+    <h4>No Profiles Found</h4>
+    <p>There are no profiles matching your search criteria. Try adjusting your filters or create a new profile.</p>
+    <a href="{% url 'admin_profile_create' %}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-2"></i>Create New Profile
+    </a>
+</div>
+{% endif %}
+{% endblock %} 

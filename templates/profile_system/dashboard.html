@@ -1,309 +1,608 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - Global Profile{% endblock %}
+{% block title %}Dashboard - GSEZ Profile System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+    
+    .quick-action-card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .quick-action-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.25rem;
+    }
+    
+    .activity-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .activity-timeline:before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        width: 2px;
+        height: 100%;
+        background-color: #e5e7eb;
+    }
+    
+    .activity-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    
+    .activity-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .activity-dot {
+        position: absolute;
+        left: -2rem;
+        top: 0;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        border: 2px solid white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    .stat-trend-up {
+        color: var(--success-color);
+    }
+    
+    .stat-trend-down {
+        color: var(--danger-color);
+    }
+    
+    .profile-info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .profile-info-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12 mb-4">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-            </ol>
-        </nav>
+<div class="dashboard-header" data-aos="fade-down">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge {% if user_type == 'Admin' %}bg-primary{% elif user_type == 'HR' %}bg-warning{% elif user_type == 'Gate' %}bg-secondary{% else %}bg-success{% endif %} px-3 py-2 mb-3">
+                    <i class="fas {% if user_type == 'Admin' %}fa-user-shield{% elif user_type == 'HR' %}fa-user-tie{% elif user_type == 'Gate' %}fa-door-open{% else %}fa-user{% endif %} me-2"></i>
+                    {{ user_type }}
+                </span>
+                <h1 class="welcome-message mb-3">
+                    <i class="fas fa-hand-sparkles me-2"></i>
+                    Welcome to GSEZ, {{ user.get_full_name|default:user.username }}!
+                </h1>
+                <p class="lead mb-0">Your comprehensive platform for all GSEZ services and information.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <div class="position-relative d-inline-block">
+                    {% if user.profile.photo %}
+                        <img src="{% if user.profile.photo %}{{ user.profile.photo.url }}{% else %}https://via.placeholder.com/150{% endif %}" alt="Profile Photo" class="profile-img">
+                    {% else %}
+                        <div class="profile-img bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user fa-3x text-white"></i>
+                        </div>
+                    {% endif %}
+                    <div class="position-absolute bottom-0 end-0">
+                        <span class="badge rounded-pill {% if user.profile.status == 'active' %}bg-success{% elif user.profile.status == 'blocked' %}bg-danger{% elif user.profile.status == 'terminated' %}bg-secondary{% else %}bg-warning{% endif %} p-2">
+                            <i class="fas {% if user.profile.status == 'active' %}fa-check-circle{% elif user.profile.status == 'blocked' %}fa-ban{% elif user.profile.status == 'terminated' %}fa-times-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-{% if profile %}
-<!-- Profile Overview -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card profile-card" data-aos="fade-up">
-            <div class="profile-header">
-                <div class="container">
-                    <div class="row align-items-center">
-                        <div class="col-md-4 text-center">
-                            <div class="profile-img-container">
-                                {% if profile.photo %}
-                                <img src="{{ profile.photo.url }}" alt="Profile Photo" class="profile-img">
-                                {% else %}
-                                <div class="profile-img d-flex align-items-center justify-content-center bg-light">
-                                    <i class="fas fa-user fa-4x text-secondary"></i>
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="row mb-5">
+        <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="card stat-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">GSEZ ID</h6>
+                            <h4 class="mb-0">{{ user.profile.gsez_id|default:"Not Created" }}</h4>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
+                            <i class="fas fa-id-card fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="card stat-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Status</h6>
+                            <h4 class="mb-0">{{ user.profile.get_status_display|default:"N/A" }}</h4>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded-circle">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="card stat-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Expiry Date</h6>
+                            <h4 class="mb-0">{{ user.profile.expiry_date|date:"d M Y"|default:"N/A" }}</h4>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-circle">
+                            <i class="fas fa-calendar-alt fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Sections -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Profile Summary Card -->
+            <div class="card mb-4" data-aos="fade-up">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i> Profile Summary</h5>
+                    <a href="{% url 'edit_profile' user.profile.gsez_id %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit me-1"></i> Edit
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-user"></i>
                                 </div>
-                                {% endif %}
-                                <div class="profile-status {{ profile.status }}"></div>
+                                <div>
+                                    <div class="text-muted small">Full Name</div>
+                                    <div class="fw-medium">{{ user.get_full_name }}</div>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Email</div>
+                                    <div class="fw-medium">{{ user.email }}</div>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-flag"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Nationality</div>
+                                    <div class="fw-medium">{{ user.profile.nationality }}</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-8">
-                            <h2 class="mb-1">{{ user.get_full_name }}</h2>
-                            <p class="mb-3 opacity-75">GSEZ ID: {{ profile.gsez_id }}</p>
-                            <div class="d-flex flex-wrap gap-3">
-                                <a href="{% url 'profile_detail' profile.gsez_id %}" class="btn btn-light btn-sm">
-                                    <i class="fas fa-user me-2"></i> View Full Profile
-                                </a>
-                                <a href="{% url 'edit_profile' profile.gsez_id %}" class="btn btn-light btn-sm">
-                                    <i class="fas fa-edit me-2"></i> Edit Profile
-                                </a>
-                                <a href="{% url 'job_list' %}" class="btn btn-light btn-sm">
-                                    <i class="fas fa-briefcase me-2"></i> Browse Jobs
-                                </a>
+                        <div class="col-md-6">
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-birthday-cake"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Date of Birth</div>
+                                    <div class="fw-medium">{{ user.profile.date_of_birth|date:"d M Y" }}</div>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-id-card-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">ID Number</div>
+                                    <div class="fw-medium">{{ user.profile.govt_id_number }}</div>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Emergency Contact</div>
+                                    <div class="fw-medium">{{ user.profile.emergency_contact }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="profile-details">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-info-circle me-2"></i> Personal Information</h5>
-                        <div class="profile-detail-item">
-                            <div class="profile-detail-icon">
-                                <i class="fas fa-flag"></i>
-                            </div>
-                            <div class="profile-detail-content">
-                                <div class="profile-detail-label">Nationality</div>
-                                <div class="profile-detail-value">{{ profile.nationality }}</div>
-                            </div>
-                        </div>
-                        <div class="profile-detail-item">
-                            <div class="profile-detail-icon">
-                                <i class="fas fa-birthday-cake"></i>
-                            </div>
-                            <div class="profile-detail-content">
-                                <div class="profile-detail-label">Date of Birth</div>
-                                <div class="profile-detail-value">{{ profile.date_of_birth }}</div>
+
+            <!-- GSEZ Information Card with Animation -->
+            <div class="card mb-4 overflow-hidden" data-aos="fade-up">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> About GSEZ</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="position-relative overflow-hidden rounded" data-aos="zoom-in">
+                                <img src="/static/img/GSEZ.png" alt="GSEZ Logo" class="img-fluid rounded mb-3">
+                                <div class="position-absolute top-0 start-0 w-100 h-100 bg-primary bg-opacity-10"></div>
                             </div>
                         </div>
-                        <div class="profile-detail-item">
-                            <div class="profile-detail-icon">
-                                <i class="fas fa-id-card"></i>
-                            </div>
-                            <div class="profile-detail-content">
-                                <div class="profile-detail-label">Government ID</div>
-                                <div class="profile-detail-value">{{ profile.govt_id_number }}</div>
+                        <div class="col-md-6">
+                            <h5 class="fw-bold mb-3">Gabon Special Economic Zone</h5>
+                            <p class="text-muted">GSEZ is a world-class industrial park designed to promote economic growth and diversification in Gabon through sustainable industrialization and innovation.</p>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-info-circle me-1"></i> Learn More
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-envelope me-1"></i> Contact Us
+                                </a>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-id-badge me-2"></i> GSEZ ID Information</h5>
-                        <div class="profile-detail-item">
-                            <div class="profile-detail-icon">
-                                <i class="fas fa-calendar-plus"></i>
-                            </div>
-                            <div class="profile-detail-content">
-                                <div class="profile-detail-label">Issue Date</div>
-                                <div class="profile-detail-value">{{ profile.issue_date }}</div>
-                            </div>
-                        </div>
-                        <div class="profile-detail-item">
-                            <div class="profile-detail-icon">
-                                <i class="fas fa-calendar-times"></i>
-                            </div>
-                            <div class="profile-detail-content">
-                                <div class="profile-detail-label">Expiry Date</div>
-                                <div class="profile-detail-value">{{ profile.expiry_date }}</div>
+                    
+                    <!-- Animated Features Section -->
+                    <div class="row mt-4">
+                        <div class="col-md-4 mb-3" data-aos="fade-up" data-aos-delay="100">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded-circle me-3">
+                                    <i class="fas fa-industry text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Industrial Hub</h6>
+                                    <p class="mb-0 small text-muted">State-of-the-art facilities</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="profile-detail-item">
-                            <div class="profile-detail-icon">
-                                <i class="fas fa-phone-alt"></i>
+                        <div class="col-md-4 mb-3" data-aos="fade-up" data-aos-delay="200">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded-circle me-3">
+                                    <i class="fas fa-leaf text-success"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Sustainability</h6>
+                                    <p class="mb-0 small text-muted">Eco-friendly operations</p>
+                                </div>
                             </div>
-                            <div class="profile-detail-content">
-                                <div class="profile-detail-label">Emergency Contact</div>
-                                <div class="profile-detail-value">{{ profile.emergency_contact }}</div>
+                        </div>
+                        <div class="col-md-4 mb-3" data-aos="fade-up" data-aos-delay="300">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-3 rounded-circle me-3">
+                                    <i class="fas fa-globe text-info"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Global Network</h6>
+                                    <p class="mb-0 small text-muted">International connections</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="row mt-4">
-                    <div class="col-md-8">
-                        <h5><i class="fas fa-briefcase me-2"></i> Current Employment</h5>
-                        {% if current_employment %}
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="profile-detail-item">
-                                            <div class="profile-detail-icon">
-                                                <i class="fas fa-building"></i>
-                                            </div>
-                                            <div class="profile-detail-content">
-                                                <div class="profile-detail-label">Company</div>
-                                                <div class="profile-detail-value">{{ current_employment.company.name }}</div>
-                                            </div>
-                                        </div>
-                                        <div class="profile-detail-item">
-                                            <div class="profile-detail-icon">
-                                                <i class="fas fa-user-tie"></i>
-                                            </div>
-                                            <div class="profile-detail-content">
-                                                <div class="profile-detail-label">Designation</div>
-                                                <div class="profile-detail-value">{{ current_employment.designation }}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="profile-detail-item">
-                                            <div class="profile-detail-icon">
-                                                <i class="fas fa-sitemap"></i>
-                                            </div>
-                                            <div class="profile-detail-content">
-                                                <div class="profile-detail-label">Department</div>
-                                                <div class="profile-detail-value">{{ current_employment.department }}</div>
-                                            </div>
-                                        </div>
-                                        <div class="profile-detail-item">
-                                            <div class="profile-detail-icon">
-                                                <i class="fas fa-calendar-alt"></i>
-                                            </div>
-                                            <div class="profile-detail-content">
-                                                <div class="profile-detail-label">Join Date</div>
-                                                <div class="profile-detail-value">{{ current_employment.join_date }}</div>
-                                            </div>
-                                        </div>
-                                    </div>
+            </div>
+
+            <!-- Employment Information -->
+            {% if current_employment %}
+            <div class="card mb-4" data-aos="fade-up">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);">
+                    <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i> Current Employment</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Company</div>
+                                    <div class="fw-medium">{{ current_employment.company.name }}</div>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Designation</div>
+                                    <div class="fw-medium">{{ current_employment.designation }}</div>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-sitemap"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Department</div>
+                                    <div class="fw-medium">{{ current_employment.department }}</div>
                                 </div>
                             </div>
                         </div>
-                        {% else %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i> No current employment record found.
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <h5><i class="fas fa-qrcode me-2"></i> QR Code</h5>
-                        <div class="qr-container">
-                            {% if profile.qr_code %}
-                            <img src="{{ profile.qr_code.url }}" alt="QR Code" class="qr-code">
-                            <p class="mt-2 small text-muted">Scan to verify identity</p>
-                            {% else %}
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i> QR code not generated.
+                        <div class="col-md-6">
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-fingerprint"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Employee Code</div>
+                                    <div class="fw-medium">{{ current_employment.employee_code }}</div>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Join Date</div>
+                                    <div class="fw-medium">{{ current_employment.join_date|date:"d M Y" }}</div>
+                                </div>
+                            </div>
+                            {% if current_employment.rating %}
+                            <div class="profile-info-item">
+                                <div class="profile-info-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Rating</div>
+                                    <div class="fw-medium">
+                                        {% for i in "12345" %}
+                                            {% if i|add:"0" <= current_employment.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                            <i class="far fa-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Job Applications -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card" data-aos="fade-up">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i> Recent Job Applications</h5>
-                <a href="{% url 'job_list' %}" class="btn btn-sm btn-primary">Browse Jobs</a>
-            </div>
-            <div class="card-body">
-                {% if job_applications %}
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Job Title</th>
-                                <th>Company</th>
-                                <th>Applied Date</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for application in job_applications %}
-                            <tr>
-                                <td>{{ application.job.title }}</td>
-                                <td>{{ application.job.company.name }}</td>
-                                <td>{{ application.application_date|date:"M d, Y" }}</td>
-                                <td>
-                                    <span class="badge bg-{% if application.status == 'accepted' %}success{% elif application.status == 'rejected' %}danger{% elif application.status == 'shortlisted' %}info{% else %}secondary{% endif %}">
-                                        {{ application.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="{% url 'job_detail' application.job.id %}" class="btn btn-sm btn-outline-primary">View Job</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            {% endif %}
+            
+            <!-- Recent Activity -->
+            <div class="card mb-4 mb-lg-0" data-aos="fade-up">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Recent Activity</h5>
                 </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
-                    <h5>No Job Applications Yet</h5>
-                    <p class="text-muted">You haven't applied for any jobs yet.</p>
-                    <a href="{% url 'job_list' %}" class="btn btn-primary">Browse Jobs</a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card" data-aos="fade-up">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <a href="{% url 'edit_profile' profile.gsez_id %}" class="card text-center h-100 text-decoration-none">
-                            <div class="card-body">
-                                <i class="fas fa-user-edit fa-2x text-primary mb-3"></i>
-                                <h6>Update Profile</h6>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Profile Updated</h6>
+                                    <p class="text-muted mb-0 small">You updated your profile information</p>
+                                </div>
+                                <span class="text-muted small">Today</span>
                             </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'job_list' %}" class="card text-center h-100 text-decoration-none">
-                            <div class="card-body">
-                                <i class="fas fa-search fa-2x text-primary mb-3"></i>
-                                <h6>Find Jobs</h6>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Login Detected</h6>
+                                    <p class="text-muted mb-0 small">Successful login from your device</p>
+                                </div>
+                                <span class="text-muted small">Today</span>
                             </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'profile_detail' profile.gsez_id %}" class="card text-center h-100 text-decoration-none">
-                            <div class="card-body">
-                                <i class="fas fa-id-card fa-2x text-primary mb-3"></i>
-                                <h6>View ID Card</h6>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Document Verified</h6>
+                                    <p class="text-muted mb-0 small">Your ID documents were verified</p>
+                                </div>
+                                <span class="text-muted small">Yesterday</span>
                             </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="#" class="card text-center h-100 text-decoration-none">
-                            <div class="card-body">
-                                <i class="fas fa-question-circle fa-2x text-primary mb-3"></i>
-                                <h6>Get Help</h6>
-                            </div>
-                        </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-{% else %}
-<!-- No Profile Found -->
-<div class="row">
-    <div class="col-12">
-        <div class="card" data-aos="fade-up">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-user-slash fa-5x text-muted mb-4"></i>
-                <h3>Profile Not Found</h3>
-                <p class="lead mb-4">You need to create your profile to access all features of the Global Profile system.</p>
-                <a href="{% url 'create_profile' %}" class="btn btn-primary btn-lg">Create Profile</a>
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- QR Code Card -->
+            <div class="card mb-4 text-center" data-aos="fade-left">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i> My QR Code</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if user.profile.qr_code %}
+                        <div class="bg-light p-3 rounded mb-3">
+                            <img src="{% if user.profile.qr_code %}{{ user.profile.qr_code.url }}{% else %}https://via.placeholder.com/200{% endif %}" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                        </div>
+                        <p class="mb-0 text-muted">Scan this QR code for quick access to your profile.</p>
+                        <div class="mt-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download me-1"></i> Download
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary ms-2">
+                                <i class="fas fa-share-alt me-1"></i> Share
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            QR code not generated yet.
+                        </div>
+                    {% endif %}
+                </div>
             </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card mb-4" data-aos="fade-left" data-aos-delay="100">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <a href="{% url 'profile_detail' user.profile.gsez_id %}" class="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom quick-action-card">
+                        <div class="quick-action-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">View My Profile</h6>
+                            <p class="mb-0 small text-muted">See your complete profile details</p>
+                        </div>
+                        <i class="fas fa-chevron-right ms-auto text-muted"></i>
+                    </a>
+                    <a href="{% url 'edit_profile' user.profile.gsez_id %}" class="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom quick-action-card">
+                        <div class="quick-action-icon bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Edit Profile</h6>
+                            <p class="mb-0 small text-muted">Update your personal information</p>
+                        </div>
+                        <i class="fas fa-chevron-right ms-auto text-muted"></i>
+                    </a>
+                    <a href="{% url 'job_list' %}" class="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom quick-action-card">
+                        <div class="quick-action-icon bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Browse Jobs</h6>
+                            <p class="mb-0 small text-muted">Find career opportunities in GSEZ</p>
+                        </div>
+                        <i class="fas fa-chevron-right ms-auto text-muted"></i>
+                    </a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'search_profiles' %}" class="d-flex align-items-center p-3 text-decoration-none text-dark quick-action-card">
+                        <div class="quick-action-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Search Profiles</h6>
+                            <p class="mb-0 small text-muted">Find and manage user profiles</p>
+                        </div>
+                        <i class="fas fa-chevron-right ms-auto text-muted"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Applications -->
+            {% if job_applications %}
+            <div class="card" data-aos="fade-left" data-aos-delay="200">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i> Recent Applications</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for application in job_applications|slice:":3" %}
+                        <li class="list-group-item p-3">
+                            <h6 class="mb-1 fw-bold">{{ application.job.title }}</h6>
+                            <p class="mb-2 small text-muted">{{ application.job.company.name }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge {% if application.status == 'applied' %}bg-primary{% elif application.status == 'shortlisted' %}bg-info{% elif application.status == 'interviewed' %}bg-warning{% elif application.status == 'offered' %}bg-success{% elif application.status == 'rejected' %}bg-danger{% elif application.status == 'accepted' %}bg-success{% else %}bg-secondary{% endif %} rounded-pill px-3 py-2">{{ application.get_status_display }}</span>
+                                <small class="text-muted">{{ application.application_date|date:"d M Y" }}</small>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if job_applications.count > 3 %}
+                    <div class="card-footer text-center p-3">
+                        <a href="#" class="btn btn-sm btn-outline-primary">View all applications</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-{% endif %}
-{% endblock %} 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animated counters for stats
+        const animateValue = (element, start, end, duration) => {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                element.textContent = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        };
+        
+        // Add hover effects for cards
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px)';
+                this.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.1)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            });
+        });
+    });
+</script>
+{% endblock %}

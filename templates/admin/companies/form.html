@@ -1,0 +1,172 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if company_form.instance.pk %}Edit Company{% else %}Add New Company{% endif %} | GSEZ Admin Panel{% endblock %}
+
+{% block companies_active %}active{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'admin_companies' %}">Company Management</a></li>
+                <li class="breadcrumb-item active">{% if company_form.instance.pk %}Edit Company{% else %}Add New Company{% endif %}</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-0">{% if company_form.instance.pk %}Edit Company{% else %}Add New Company{% endif %}</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Company Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ company_form.name.id_for_label }}" class="form-label">Company Name</label>
+                            <input type="text" name="{{ company_form.name.name }}" 
+                                   id="{{ company_form.name.id_for_label }}" 
+                                   class="form-control {% if company_form.name.errors %}is-invalid{% endif %}"
+                                   value="{{ company_form.name.value|default:'' }}" required>
+                            {% if company_form.name.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in company_form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ company_form.registration_number.id_for_label }}" class="form-label">Registration Number</label>
+                            <input type="text" name="{{ company_form.registration_number.name }}" 
+                                   id="{{ company_form.registration_number.id_for_label }}" 
+                                   class="form-control {% if company_form.registration_number.errors %}is-invalid{% endif %}"
+                                   value="{{ company_form.registration_number.value|default:'' }}" required>
+                            {% if company_form.registration_number.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in company_form.registration_number.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ company_form.contact_email.id_for_label }}" class="form-label">Contact Email</label>
+                            <input type="email" name="{{ company_form.contact_email.name }}" 
+                                   id="{{ company_form.contact_email.id_for_label }}" 
+                                   class="form-control {% if company_form.contact_email.errors %}is-invalid{% endif %}"
+                                   value="{{ company_form.contact_email.value|default:'' }}" required>
+                            {% if company_form.contact_email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in company_form.contact_email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ company_form.contact_phone.id_for_label }}" class="form-label">Contact Phone</label>
+                            <input type="text" name="{{ company_form.contact_phone.name }}" 
+                                   id="{{ company_form.contact_phone.id_for_label }}" 
+                                   class="form-control {% if company_form.contact_phone.errors %}is-invalid{% endif %}"
+                                   value="{{ company_form.contact_phone.value|default:'' }}" required>
+                            {% if company_form.contact_phone.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in company_form.contact_phone.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="{{ company_form.website.id_for_label }}" class="form-label">Website URL</label>
+                            <input type="url" name="{{ company_form.website.name }}" 
+                                   id="{{ company_form.website.id_for_label }}" 
+                                   class="form-control {% if company_form.website.errors %}is-invalid{% endif %}"
+                                   value="{{ company_form.website.value|default:'' }}">
+                            {% if company_form.website.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in company_form.website.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Optional. Include http:// or https://</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="{{ company_form.address.id_for_label }}" class="form-label">Company Address</label>
+                            <textarea name="{{ company_form.address.name }}" 
+                                      id="{{ company_form.address.id_for_label }}" 
+                                      class="form-control {% if company_form.address.errors %}is-invalid{% endif %}"
+                                      rows="3" required>{{ company_form.address.value|default:'' }}</textarea>
+                            {% if company_form.address.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in company_form.address.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'admin_companies' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if company_form.instance.pk %}Update Company{% else %}Create Company{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Help</h5>
+            </div>
+            <div class="card-body">
+                <h6>Company Registration</h6>
+                <p>Enter the official registration number of the company as registered with the appropriate government authority.</p>
+                
+                <h6>Contact Information</h6>
+                <p>The contact email and phone number should be the primary contact details for the company. These will be used for official communications.</p>
+                
+                <h6>Website</h6>
+                <p>Enter the full URL of the company's website, including the http:// or https:// prefix. This field is optional.</p>
+                
+                {% if company_form.instance.pk %}
+                <div class="alert alert-info mt-4">
+                    <h6 class="alert-heading">Company Details</h6>
+                    <p class="mb-0">This company has {{ company_form.instance.employees.count }} employees and {{ company_form.instance.job_postings.count }} job postings.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

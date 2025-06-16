@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Family Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'profile_detail' gsez_id=profile.gsez_id %}">Profile</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'family_details' gsez_id=profile.gsez_id %}">Family Details</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit Family Member</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users me-2"></i> Edit Family Member
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="text-danger">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.relationship.id_for_label }}" class="form-label">Relationship</label>
+                                {{ form.relationship }}
+                                {% if form.relationship.errors %}
+                                <div class="text-danger">{{ form.relationship.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.contact.id_for_label }}" class="form-label">Contact</label>
+                                {{ form.contact }}
+                                {% if form.contact.errors %}
+                                <div class="text-danger">{{ form.contact.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'family_details' gsez_id=profile.gsez_id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Family Details
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Update Family Member
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

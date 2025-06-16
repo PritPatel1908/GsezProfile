@@ -2,203 +2,461 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="/static/img/GSEZ.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Global Profile - GSEZ{% endblock %}</title>
+    <title>{% block title %}GSEZ Profile System{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- AOS Animation Library -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/css/custom.css">
     <style>
         :root {
-            --primary-color: #0056b3;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
+            --primary-color: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --secondary-color: #0ea5e9;
+            --accent-color: #f59e0b;
+            --dark-color: #111827;
+            --light-color: #f9fafb;
+            --gray-color: #6b7280;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f5f5;
+            color: var(--dark-color);
         }
         
+        /* Premium Navbar Styling */
         .navbar {
-            background-color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 1rem;
         }
         
         .navbar-brand {
-            font-weight: bold;
-            color: white !important;
+            display: flex;
+            align-items: center;
         }
         
-        .navbar-nav .nav-link {
-            color: rgba(255, 255, 255, 0.85) !important;
+        .navbar-brand img {
+            height: 42px;
+            margin-right: 12px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+            transition: transform 0.3s ease;
         }
         
-        .navbar-nav .nav-link:hover {
-            color: white !important;
+        .navbar-brand:hover img {
+            transform: scale(1.05);
         }
         
-        .card {
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+        .navbar-brand span {
+            font-weight: 600;
+            font-size: 1.25rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: white;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover:after, 
+        .nav-item.active .nav-link:after {
+            width: 80%;
+        }
+        
+        .dropdown-menu {
             border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
         
-        .card-header {
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 8px 8px 0 0 !important;
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: translateX(5px);
+        }
+        
+        /* Button Styling */
+        .btn {
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border: none;
         }
         
         .btn-primary:hover {
-            background-color: #004494;
-            border-color: #004494;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
         
-        .footer {
-            background-color: #343a40;
+        .btn-outline-primary {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Card Styling */
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s ease;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             color: white;
-            padding: 20px 0;
-            margin-top: 40px;
+            font-weight: 600;
+            padding: 1.25rem 1.5rem;
+            border-bottom: none;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Footer Styling */
+        .footer {
+            background: linear-gradient(135deg, var(--dark-color) 0%, #2d3748 100%);
+            color: white;
+            padding: 3rem 0 2rem;
+            margin-top: 5rem;
+        }
+        
+        .footer h5 {
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+        
+        .footer h5:after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background-color: var(--primary-light);
+            bottom: 0;
+            left: 0;
+        }
+        
+        /* Animation Classes */
+        .animate-fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        .animate-scale {
+            animation: scale 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes scale {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Auth pages styling */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 2rem 0;
+        }
+        
+        .auth-card {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .auth-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .auth-header img {
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+        
+        .auth-body {
+            padding: 2.5rem;
+            background-color: white;
+        }
+        
+        /* Dashboard specific styling */
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2.5rem;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card {
+            border-left: 4px solid var(--primary-color);
+            background: white;
+        }
+        
+        .welcome-message {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
         
         .profile-img {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             object-fit: cover;
             border-radius: 50%;
-            border: 4px solid var(--primary-color);
+            border: 4px solid white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
         }
         
-        .qr-code {
-            max-width: 150px;
-            margin: 0 auto;
-        }
-        
-        .status-badge {
-            font-size: 0.9rem;
-            padding: 5px 10px;
-            border-radius: 20px;
-        }
-        
-        .status-active {
-            background-color: var(--success-color);
-            color: white;
-        }
-        
-        .status-blocked {
-            background-color: var(--danger-color);
-            color: white;
-        }
-        
-        .status-terminated {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        
-        .status-surveillance {
-            background-color: var(--warning-color);
-            color: black;
+        /* Badge styling */
+        .badge {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            border-radius: 6px;
         }
         
         /* Form styling */
-        .form-container {
-            background-color: white;
-            padding: 30px;
+        .form-control, .form-select {
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+            box-shadow: none;
+            transition: all 0.3s ease;
         }
         
-        /* Custom alert styling */
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+        
+        /* Table styling */
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+        
+        .table tbody td {
+            padding: 1rem 1.5rem;
+            vertical-align: middle;
+        }
+        
+        /* Alert styling */
         .alert {
-            border-radius: 8px;
-            border-left: 4px solid;
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
         
-        .alert-success {
-            border-left-color: var(--success-color);
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
         
-        .alert-danger {
-            border-left-color: var(--danger-color);
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
         
-        .alert-warning {
-            border-left-color: var(--warning-color);
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 10px;
         }
         
-        .alert-info {
-            border-left-color: var(--info-color);
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+        
+        /* Glassmorphism elements */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Loading animation */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-id-card"></i> Global Profile
+                <img src="/static/img/GSEZ.png" alt="GSEZ Logo">
+                <span>GSEZ Profile System</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'job_list' %}">Job Portal</a>
-                    </li>
-                    {% if user.is_staff %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'scan_qr' %}">Scan QR</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'search_profiles' %}">Search Profiles</a>
-                    </li>
-                    {% endif %}
-                </ul>
-                <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle"></i> {{ user.get_full_name|default:user.username }}
+                        <a class="nav-link" href="{% url 'home' %}">
+                            <i class="fas fa-home me-1"></i> Home
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
-                            {% if user.email %}
-                            <li><a class="dropdown-item" href="{% url 'company_dashboard' %}">Company Dashboard</a></li>
-                            {% endif %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
-                        </ul>
                     </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'dashboard' %}">
+                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        {% if user.is_staff %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'search_profiles' %}">
+                                    <i class="fas fa-search me-1"></i> Search Profiles
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'scan_qr' %}">
+                                    <i class="fas fa-qrcode me-1"></i> Scan QR
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                {% if user.profile.photo %}
+                                    <img src="{{ user.profile.photo.url }}" alt="Profile" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover;">
+                                {% else %}
+                                    <i class="fas fa-user-circle me-1"></i>
+                                {% endif %}
+                                {{ user.get_full_name|default:user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                {% if user.profile %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'profile_detail' user.profile.gsez_id %}">
+                                            <i class="fas fa-user me-2 text-primary"></i> My Profile
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'create_profile' %}">
+                                            <i class="fas fa-user-plus me-2 text-primary"></i> Create Profile
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="fas fa-sign-out-alt me-2 text-danger"></i> Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                     {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'register' %}">Register</a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i> Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'register' %}">
+                                <i class="fas fa-user-plus me-1"></i> Register
+                            </a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
@@ -206,95 +464,123 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="container">
+    <main>
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show animate-fade-in" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
+            <div class="container mt-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" data-aos="fade-down" data-aos-duration="800">
+                        <div class="d-flex align-items-center">
+                            {% if message.tags == 'success' %}
+                                <i class="fas fa-check-circle me-2 fa-lg"></i>
+                            {% elif message.tags == 'error' %}
+                                <i class="fas fa-exclamation-circle me-2 fa-lg"></i>
+                            {% elif message.tags == 'warning' %}
+                                <i class="fas fa-exclamation-triangle me-2 fa-lg"></i>
+                            {% elif message.tags == 'info' %}
+                                <i class="fas fa-info-circle me-2 fa-lg"></i>
+                            {% endif %}
+                            <div>{{ message }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
         
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="row">
-                <div class="col-md-4 mb-4">
-                    <h5>Global Profile - GSEZ</h5>
-                    <p>Managing and verifying the identity, employment history, and access permissions of all individuals working within the Gabon Special Economic Zone.</p>
-                    <div class="social-icons mt-3">
-                        <a href="#" class="me-2" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="me-2" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="me-2" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="me-2" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5>GSEZ Profile System</h5>
+                    <p class="mb-4">A comprehensive profile management system for Gabon Special Economic Zone.</p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-white"><i class="fab fa-facebook-f fa-lg"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-linkedin-in fa-lg"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-instagram fa-lg"></i></a>
                     </div>
                 </div>
-                <div class="col-md-3 mb-4">
-                    <h5>Quick Links</h5>
+                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
+                    <h5>Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="{% url 'home' %}">Home</a></li>
-                        <li><a href="{% url 'job_list' %}">Job Portal</a></li>
-                        {% if user.is_authenticated %}
-                        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                        {% else %}
-                        <li><a href="{% url 'login' %}">Login</a></li>
-                        <li><a href="{% url 'register' %}">Register</a></li>
-                        {% endif %}
+                        <li class="mb-2"><a href="{% url 'home' %}" class="text-white text-decoration-none">Home</a></li>
+                        <li class="mb-2"><a href="{% url 'dashboard' %}" class="text-white text-decoration-none">Dashboard</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none">About Us</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Contact</a></li>
                     </ul>
                 </div>
-                <div class="col-md-5 mb-4">
-                    <h5>Contact</h5>
-                    <ul class="list-unstyled footer-contact">
-                        <li>
-                            <div class="footer-contact-icon">
-                                <i class="fas fa-envelope"></i>
-                            </div>
-                            <div>info@gsez.com</div>
-                        </li>
-                        <li>
-                            <div class="footer-contact-icon">
-                                <i class="fas fa-phone"></i>
-                            </div>
-                            <div>+123 456 7890</div>
-                        </li>
-                        <li>
-                            <div class="footer-contact-icon">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
-                            <div>Gabon Special Economic Zone<br>Libreville, Gabon</div>
-                        </li>
+                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
+                    <h5>Services</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none">ID Management</a></li>
+                        <li class="mb-2"><a href="{% url 'job_list' %}" class="text-white text-decoration-none">Job Portal</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none">Access Control</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Security</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h5>Contact Us</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Nkok Special Economic Zone, Gabon</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +241 11 22 33 44</li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> info@gsez.com</li>
                     </ul>
                 </div>
             </div>
-            <div class="row footer-bottom">
-                <div class="col-md-6 text-center text-md-start">
-                    <p>&copy; {% now "Y" %} Global Profile - GSEZ. All rights reserved.</p>
+            <hr class="my-4 bg-light">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-md-0">&copy; {% now "Y" %} GSEZ. All rights reserved.</p>
                 </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <p>Designed with <i class="fas fa-heart text-danger" aria-hidden="true"></i> for GSEZ</p>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <a href="#" class="text-white text-decoration-none me-3">Privacy Policy</a>
+                        <a href="#" class="text-white text-decoration-none">Terms of Service</a>
+                    </p>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS Bundle with Popper -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Custom JS -->
-    <script src="/static/js/custom.js"></script>
     <script>
-        // Initialize AOS
-        AOS.init({
-            duration: 800,
-            easing: 'ease-in-out',
-            once: true
+        // Initialize AOS animation library
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({
+                duration: 800,
+                easing: 'ease-in-out',
+                once: true
+            });
+            
+            // Add active class to current nav item
+            const currentLocation = location.pathname;
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentLocation) {
+                    link.parentElement.classList.add('active');
+                }
+            });
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId !== '#') {
+                        document.querySelector(targetId).scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
         });
     </script>
     {% block extra_js %}{% endblock %}

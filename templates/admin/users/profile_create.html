@@ -1,0 +1,193 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Create Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'admin_profiles' %}">Profiles</a></li>
+                        <li class="breadcrumb-item active">Create Profile</li>
+                    </ol>
+                </div>
+                <h4 class="page-title">Create User Profile</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Header with Stats -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h3 class="text-white mb-0">Create New Profile</h3>
+                        <p class="text-white-50 mb-0">Create a profile for a user in the system</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <a href="{% url 'admin_profiles' %}" class="btn btn-light">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Profiles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-3">Select User</h5>
+                            <div class="form-group">
+                                <select name="user" class="form-select" required>
+                                    <option value="">-- Select User --</option>
+                                    {% for user in users_without_profiles %}
+                                        <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.username }})</option>
+                                    {% empty %}
+                                        <option value="" disabled>All users already have profiles</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-3">Basic Information</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.gsez_id.id_for_label }}">GSEZ ID</label>
+                                        {{ form.gsez_id }}
+                                        {% if form.gsez_id.errors %}
+                                            <div class="text-danger">{{ form.gsez_id.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.nationality.id_for_label }}">Nationality</label>
+                                        {{ form.nationality }}
+                                        {% if form.nationality.errors %}
+                                            <div class="text-danger">{{ form.nationality.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+                                        {{ form.date_of_birth }}
+                                        {% if form.date_of_birth.errors %}
+                                            <div class="text-danger">{{ form.date_of_birth.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.expiry_date.id_for_label }}">Expiry Date</label>
+                                        {{ form.expiry_date }}
+                                        {% if form.expiry_date.errors %}
+                                            <div class="text-danger">{{ form.expiry_date.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-3">Identification</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.govt_id_number.id_for_label }}">Government ID Number</label>
+                                        {{ form.govt_id_number }}
+                                        {% if form.govt_id_number.errors %}
+                                            <div class="text-danger">{{ form.govt_id_number.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.emergency_contact.id_for_label }}">Emergency Contact</label>
+                                        {{ form.emergency_contact }}
+                                        {% if form.emergency_contact.errors %}
+                                            <div class="text-danger">{{ form.emergency_contact.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.photo.id_for_label }}">Profile Photo</label>
+                                        <input type="file" name="{{ form.photo.name }}" class="form-control" id="{{ form.photo.id_for_label }}">
+                                        {% if form.photo.errors %}
+                                            <div class="text-danger">{{ form.photo.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.govt_id_scan.id_for_label }}">Government ID Scan</label>
+                                        <input type="file" name="{{ form.govt_id_scan.name }}" class="form-control" id="{{ form.govt_id_scan.id_for_label }}">
+                                        {% if form.govt_id_scan.errors %}
+                                            <div class="text-danger">{{ form.govt_id_scan.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-3">Status</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.status.id_for_label }}">Profile Status</label>
+                                        {{ form.status }}
+                                        {% if form.status.errors %}
+                                            <div class="text-danger">{{ form.status.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="d-block">&nbsp;</label>
+                                        <div class="form-check">
+                                            {{ form.save_as_draft }}
+                                            <label class="form-check-label" for="{{ form.save_as_draft.id_for_label }}">
+                                                Save as draft
+                                            </label>
+                                        </div>
+                                        <small class="text-muted">{{ form.save_as_draft.help_text }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i> Create Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize any form elements that need JavaScript
+    });
+</script>
+{% endblock %} 

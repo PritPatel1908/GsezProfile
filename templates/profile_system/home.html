@@ -1,306 +1,583 @@
 {% extends 'base.html' %}
-{% block title %}Global Profile - GSEZ Home{% endblock %}
+
+{% block title %}Home - GSEZ Profile System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 6rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section:before {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+        top: -150px;
+        right: -150px;
+        border-radius: 50%;
+    }
+    
+    .hero-section:after {
+        content: '';
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+        bottom: -100px;
+        left: -100px;
+        border-radius: 50%;
+    }
+    
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.25rem;
+        font-weight: 300;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    .hero-image {
+        position: relative;
+        z-index: 1;
+        filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+        animation: float 4s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    /* Features Section */
+    .features-section {
+        padding: 6rem 0;
+        background-color: #f9fafb;
+    }
+    
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: var(--gray-color);
+        margin-bottom: 3rem;
+        text-align: center;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .feature-card {
+        padding: 2rem;
+        border-radius: 16px;
+        background-color: white;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+    
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.75rem;
+    }
+    
+    .feature-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    /* Stats Section */
+    .stats-section {
+        padding: 5rem 0;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+    
+    .stat-card {
+        padding: 2rem;
+        text-align: center;
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .stat-label {
+        font-size: 1.1rem;
+        color: var(--gray-color);
+    }
+    
+    /* User Types Section */
+    .user-types-section {
+        padding: 6rem 0;
+    }
+    
+    .user-type-card {
+        padding: 2rem;
+        border-radius: 16px;
+        background-color: white;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .user-type-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-type-card:before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 5px;
+        top: 0;
+        left: 0;
+    }
+    
+    .user-type-admin:before {
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    }
+    
+    .user-type-user:before {
+        background: linear-gradient(90deg, var(--success-color) 0%, #059669 100%);
+    }
+    
+    .user-type-hr:before {
+        background: linear-gradient(90deg, var(--warning-color) 0%, #d97706 100%);
+    }
+    
+    .user-type-gate:before {
+        background: linear-gradient(90deg, var(--secondary-color) 0%, #0284c7 100%);
+    }
+    
+    .user-type-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.75rem;
+    }
+    
+    .user-type-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+        padding: 5rem 0;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        text-align: center;
+    }
+    
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+    
+    .cta-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .btn-cta {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+        border-radius: 10px;
+        background-color: white;
+        color: var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cta:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        color: var(--primary-dark);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+        }
+        
+        .cta-title {
+            font-size: 2rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 4rem 0;
+        }
+        
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .features-section, .stats-section, .user-types-section {
+            padding: 4rem 0;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<div class="hero-section mb-5" data-aos="fade-up">
+<section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-7">
-                <h1 class="display-4 fw-bold mb-4">Welcome to Global Profile</h1>
-                <p class="lead mb-4">The comprehensive identity and employment management system for the Gabon Special Economic Zone.</p>
-                <p class="mb-4">Manage your digital ID, employment history, and access permissions all in one secure platform.</p>
-                {% if not user.is_authenticated %}
-                <div class="d-flex gap-3">
-                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Register Now</a>
-                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Login</a>
+            <div class="col-lg-6" data-aos="fade-right">
+                <h1 class="hero-title">Welcome to GSEZ Profile System</h1>
+                <p class="hero-subtitle">A comprehensive platform for managing profiles, access control, and employment opportunities within the Gabon Special Economic Zone.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg">
+                            <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'register' %}" class="btn btn-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i> Create Account
+                        </a>
+                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i> Login
+                        </a>
+                    {% endif %}
                 </div>
-                {% else %}
-                <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
-                {% endif %}
             </div>
-            <div class="col-lg-5 d-none d-lg-block text-center">
-                <img src="/static/img/hero-image.svg" alt="Global Profile" class="img-fluid" style="max-height: 350px;" onerror="this.src='https://via.placeholder.com/500x350?text=Global+Profile';this.onerror='';">
+            <div class="col-lg-6 text-center mt-5 mt-lg-0" data-aos="fade-left">
+                <img src="/static/img/GSEZ.png" alt="GSEZ" class="img-fluid hero-image" style="max-height: 300px;">
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Features Section -->
-<div class="container mb-5">
-    <div class="text-center mb-5" data-aos="fade-up">
-        <h2 class="fw-bold">Premium Features</h2>
-        <p class="lead text-muted">Discover the powerful features of our Global Profile system</p>
-    </div>
-    
-    <div class="row g-4">
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-            <div class="card feature-card h-100">
-                <div class="card-body">
-                    <div class="feature-icon">
-                        <i class="fas fa-id-badge"></i>
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">GSEZ in Numbers</h2>
+            <p class="section-subtitle">Key statistics about the Gabon Special Economic Zone and our profile management system</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-users"></i>
                     </div>
-                    <h5 class="card-title mt-4">Digital ID Management</h5>
-                    <p class="card-text">Secure digital GSEZ ID with QR code for quick profile access and verification.</p>
+                    <div class="stat-number" data-count="5000">5,000+</div>
+                    <div class="stat-label">Registered Users</div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-            <div class="card feature-card h-100">
-                <div class="card-body">
-                    <div class="feature-icon">
+            <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-number" data-count="120">120+</div>
+                    <div class="stat-label">Companies</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
                         <i class="fas fa-briefcase"></i>
                     </div>
-                    <h5 class="card-title mt-4">Employment History</h5>
-                    <p class="card-text">Comprehensive record of current and previous employment within the GSEZ.</p>
+                    <div class="stat-number" data-count="350">350+</div>
+                    <div class="stat-label">Job Opportunities</div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-            <div class="card feature-card h-100">
-                <div class="card-body">
-                    <div class="feature-icon">
-                        <i class="fas fa-lock"></i>
+            <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-industry"></i>
                     </div>
-                    <h5 class="card-title mt-4">Access Control</h5>
-                    <p class="card-text">Real-time status monitoring and zone entry management for enhanced security.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
-            <div class="card feature-card h-100">
-                <div class="card-body">
-                    <div class="feature-icon">
-                        <i class="fas fa-search-location"></i>
-                    </div>
-                    <h5 class="card-title mt-4">Job Portal</h5>
-                    <p class="card-text">Find and apply for jobs within the GSEZ using your verified profile.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
-            <div class="card feature-card h-100">
-                <div class="card-body">
-                    <div class="feature-icon">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <h5 class="card-title mt-4">Education Verification</h5>
-                    <p class="card-text">Store and verify your educational qualifications and certifications.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
-            <div class="card feature-card h-100">
-                <div class="card-body">
-                    <div class="feature-icon">
-                        <i class="fas fa-language"></i>
-                    </div>
-                    <h5 class="card-title mt-4">Multi-language Support</h5>
-                    <p class="card-text">Access the platform in both English and French languages.</p>
+                    <div class="stat-number" data-count="15">15+</div>
+                    <div class="stat-label">Industry Sectors</div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- How It Works Section -->
-<div class="bg-light py-5 mb-5">
-    <div class="container" data-aos="fade-up">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">How It Works</h2>
-            <p class="lead text-muted">Simple steps to get started with Global Profile</p>
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Key Features</h2>
+            <p class="section-subtitle">Discover the powerful features that make the GSEZ Profile System the ultimate solution for profile management and access control</p>
         </div>
         
-        <div class="row">
-            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="card border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="m-0">1</h3>
-                        </div>
-                        <h5>Register</h5>
-                        <p>Create your account with basic information</p>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-card">
+                    <div class="feature-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-id-card"></i>
                     </div>
+                    <h3 class="feature-title">Profile Management</h3>
+                    <p class="text-muted">Create and manage comprehensive user profiles with personal details, education, employment history, and more.</p>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="card border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="m-0">2</h3>
-                        </div>
-                        <h5>Complete Profile</h5>
-                        <p>Add your personal and professional details</p>
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-card">
+                    <div class="feature-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-qrcode"></i>
                     </div>
+                    <h3 class="feature-title">QR Code Access</h3>
+                    <p class="text-muted">Secure and quick access control using personalized QR codes for each user profile.</p>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="card border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="m-0">3</h3>
-                        </div>
-                        <h5>Get Verified</h5>
-                        <p>Receive your digital GSEZ ID with QR code</p>
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-card">
+                    <div class="feature-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-briefcase"></i>
                     </div>
+                    <h3 class="feature-title">Job Portal</h3>
+                    <p class="text-muted">Browse and apply for job opportunities within the Gabon Special Economic Zone.</p>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="400">
-                <div class="card border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="m-0">4</h3>
-                        </div>
-                        <h5>Access Services</h5>
-                        <p>Use your profile for zone access and job applications</p>
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="feature-card">
+                    <div class="feature-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-shield-alt"></i>
                     </div>
+                    <h3 class="feature-title">Security & Compliance</h3>
+                    <p class="text-muted">Advanced security measures to protect user data and ensure compliance with regulations.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                <div class="feature-card">
+                    <div class="feature-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Analytics & Reporting</h3>
+                    <p class="text-muted">Comprehensive analytics and reporting tools for administrators and HR personnel.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                <div class="feature-card">
+                    <div class="feature-icon bg-secondary bg-opacity-10 text-secondary">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Mobile Friendly</h3>
+                    <p class="text-muted">Access your profile and all features from any device with our responsive design.</p>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Statistics Section -->
-<div class="container mb-5" data-aos="fade-up">
-    <div class="text-center mb-5">
-        <h2 class="fw-bold">GSEZ at a Glance</h2>
-        <p class="lead text-muted">Our growing community of professionals</p>
-    </div>
-    
-    <div class="row g-4">
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-            <div class="stat-card">
-                <div class="stat-value" data-target="{{ profile_count }}">{{ profile_count }}</div>
-                <div class="stat-label">Registered Profiles</div>
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-            <div class="stat-card">
-                <div class="stat-value" data-target="{{ company_count }}">{{ company_count }}</div>
-                <div class="stat-label">Companies</div>
-                <div class="stat-icon">
-                    <i class="fas fa-building"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-            <div class="stat-card">
-                <div class="stat-value" data-target="{{ job_count }}">{{ job_count }}</div>
-                <div class="stat-label">Active Job Postings</div>
-                <div class="stat-icon">
-                    <i class="fas fa-briefcase"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Testimonials Section -->
-<div class="bg-light py-5 mb-5">
-    <div class="container" data-aos="fade-up">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">What Our Users Say</h2>
-            <p class="lead text-muted">Testimonials from GSEZ professionals</p>
+<!-- User Types Section -->
+<section class="user-types-section">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">User Types</h2>
+            <p class="section-subtitle">The GSEZ Profile System caters to different user types, each with specific roles and permissions</p>
         </div>
         
-        <div class="row">
-            <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                        </div>
-                        <p class="card-text">"Global Profile has streamlined our hiring process. We can now verify candidates' employment history instantly, saving us time and resources."</p>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="user-type-card user-type-admin">
+                    <div class="user-type-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-user-shield"></i>
                     </div>
-                    <div class="card-footer bg-white border-0">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <span class="fw-bold">JD</span>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">John Doe</h6>
-                                <small class="text-muted">HR Manager, ABC Company</small>
-                            </div>
-                        </div>
-                    </div>
+                    <h3 class="user-type-title">Admin</h3>
+                    <p class="text-muted">System administrators with full access to manage users, companies, and settings.</p>
+                    <ul class="text-muted mt-3">
+                        <li>User management</li>
+                        <li>System configuration</li>
+                        <li>Access control</li>
+                        <li>Analytics & reporting</li>
+                    </ul>
                 </div>
             </div>
-            <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                        </div>
-                        <p class="card-text">"The QR code system makes zone access quick and secure. I can enter different facilities without any hassle, showing my profile instantly."</p>
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="user-type-card user-type-user">
+                    <div class="user-type-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-user"></i>
                     </div>
-                    <div class="card-footer bg-white border-0">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <span class="fw-bold">JS</span>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">Jane Smith</h6>
-                                <small class="text-muted">Engineer, XYZ Corporation</small>
-                            </div>
-                        </div>
-                    </div>
+                    <h3 class="user-type-title">User</h3>
+                    <p class="text-muted">Standard users with access to their own profiles and job applications.</p>
+                    <ul class="text-muted mt-3">
+                        <li>Profile management</li>
+                        <li>Job applications</li>
+                        <li>Document uploads</li>
+                        <li>QR code access</li>
+                    </ul>
                 </div>
             </div>
-            <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star-half-alt text-warning"></i>
-                        </div>
-                        <p class="card-text">"I found my current job through the Global Profile job portal. The application process was seamless since my verified profile was already in the system."</p>
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="user-type-card user-type-hr">
+                    <div class="user-type-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-user-tie"></i>
                     </div>
-                    <div class="card-footer bg-white border-0">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <span class="fw-bold">RJ</span>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">Robert Johnson</h6>
-                                <small class="text-muted">Project Manager, DEF Industries</small>
-                            </div>
-                        </div>
+                    <h3 class="user-type-title">HR</h3>
+                    <p class="text-muted">Human Resources personnel with access to manage company profiles and job postings.</p>
+                    <ul class="text-muted mt-3">
+                        <li>Company management</li>
+                        <li>Job posting</li>
+                        <li>Application review</li>
+                        <li>Employee records</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="user-type-card user-type-gate">
+                    <div class="user-type-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-door-open"></i>
                     </div>
+                    <h3 class="user-type-title">Gate</h3>
+                    <p class="text-muted">Security personnel responsible for managing physical access to facilities.</p>
+                    <ul class="text-muted mt-3">
+                        <li>QR code scanning</li>
+                        <li>Access verification</li>
+                        <li>Entry/exit logging</li>
+                        <li>Visitor management</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
 <!-- CTA Section -->
-<div class="container mb-5">
-    <div class="card" data-aos="fade-up">
-        <div class="card-body p-5 text-center">
-            <h2 class="fw-bold mb-4">Ready to Get Started?</h2>
-            <p class="lead mb-4">Join thousands of professionals in the Gabon Special Economic Zone</p>
-            {% if not user.is_authenticated %}
-            <div class="d-flex justify-content-center gap-3">
-                <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Register Now</a>
-                <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg">Login</a>
+<section class="cta-section">
+    <div class="container">
+        <div data-aos="fade-up">
+            <h2 class="cta-title">Ready to Get Started?</h2>
+            <p class="cta-subtitle">Join thousands of users already benefiting from the GSEZ Profile System. Create your account today and experience the difference.</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-cta">
+                        <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                    </a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-cta">
+                        <i class="fas fa-user-plus me-2"></i> Create Account
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light">
+                        <i class="fas fa-sign-in-alt me-2"></i> Login
+                    </a>
+                {% endif %}
             </div>
-            {% else %}
-            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
-            {% endif %}
         </div>
     </div>
-</div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animated counters for stats
+        const animateValue = (element, start, end, duration) => {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                element.textContent = Math.floor(progress * (end - start) + start).toLocaleString() + '+';
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        };
+        
+        // Intersection Observer for stat counters
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const countElement = entry.target;
+                    const count = parseInt(countElement.getAttribute('data-count'));
+                    animateValue(countElement, 0, count, 2000);
+                    observer.unobserve(countElement);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        // Observe all stat number elements
+        document.querySelectorAll('.stat-number').forEach(el => {
+            observer.observe(el);
+        });
+    });
+</script>
 {% endblock %} 

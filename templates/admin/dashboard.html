@@ -1,0 +1,781 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | GSEZ Admin Panel{% endblock %}
+
+{% block dashboard_active %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    @media (max-width: 1199px) {
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 767px) {
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .stat-card {
+        border-radius: var(--border-radius);
+        padding: 25px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(67, 97, 238, 0.05);
+        z-index: 0;
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: rgba(67, 97, 238, 0.03);
+        z-index: 0;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-icon-users {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .stat-icon-profiles {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .stat-icon-companies {
+        background-color: rgba(155, 89, 182, 0.1);
+        color: #9b59b6;
+    }
+    
+    .stat-icon-access {
+        background-color: rgba(241, 196, 15, 0.1);
+        color: #f1c40f;
+    }
+    
+    .stat-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+        color: var(--primary-color);
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+    
+    .stat-change {
+        position: absolute;
+        top: 25px;
+        right: 25px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        z-index: 1;
+    }
+    
+    .stat-change-up {
+        color: #2ecc71;
+    }
+    
+    .stat-change-down {
+        color: #e74c3c;
+    }
+    
+    .stat-change i {
+        margin-right: 3px;
+    }
+    
+    .chart-container {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: var(--transition);
+    }
+    
+    .chart-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .chart-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .chart-action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(243, 244, 246, 0.5);
+        color: #6c757d;
+        border: none;
+        transition: var(--transition);
+    }
+    
+    .chart-action-btn:hover {
+        background-color: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
+    }
+    
+    .chart-body {
+        height: 300px;
+    }
+    
+    .recent-activity {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: var(--transition);
+    }
+    
+    .recent-activity:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .activity-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .activity-timeline {
+        position: relative;
+    }
+    
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 16px;
+        width: 2px;
+        background-color: rgba(243, 244, 246, 0.8);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 45px;
+        padding-bottom: 25px;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 1;
+    }
+    
+    .timeline-icon-user {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .timeline-icon-profile {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .timeline-icon-company {
+        background-color: rgba(155, 89, 182, 0.1);
+        color: #9b59b6;
+    }
+    
+    .timeline-icon-access {
+        background-color: rgba(241, 196, 15, 0.1);
+        color: #f1c40f;
+    }
+    
+    .timeline-content {
+        background-color: rgba(243, 244, 246, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+    }
+    
+    .timeline-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .timeline-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+    
+    .timeline-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .timeline-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .timeline-user {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--primary-color);
+    }
+    
+    .quick-actions {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: var(--transition);
+    }
+    
+    .quick-actions:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .actions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .actions-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .action-card {
+        background-color: rgba(243, 244, 246, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: var(--transition);
+    }
+    
+    .action-card:hover {
+        background-color: var(--primary-color);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(67, 97, 238, 0.2);
+    }
+    
+    .action-card:hover .action-icon,
+    .action-card:hover .action-title,
+    .action-card:hover .action-description {
+        color: white;
+    }
+    
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        background-color: white;
+        color: var(--primary-color);
+        transition: var(--transition);
+    }
+    
+    .action-card:hover .action-icon {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .action-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+        transition: var(--transition);
+    }
+    
+    .action-description {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0;
+        transition: var(--transition);
+    }
+    
+    .welcome-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+        box-shadow: 0 15px 30px rgba(67, 97, 238, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-header::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+    }
+    
+    .welcome-header::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 0;
+    }
+    
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .welcome-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 25px;
+        opacity: 0.9;
+    }
+    
+    .welcome-actions {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .welcome-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+    
+    .welcome-btn-primary {
+        background-color: white;
+        color: var(--primary-color);
+    }
+    
+    .welcome-btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(255, 255, 255, 0.3);
+    }
+    
+    .welcome-btn-secondary {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    .welcome-btn-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-3px);
+    }
+    
+    .welcome-image {
+        position: absolute;
+        right: 30px;
+        bottom: 0;
+        height: 140px;
+        z-index: 1;
+    }
+    
+    @media (max-width: 767px) {
+        .welcome-image {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-header" data-aos="fade-down">
+    <div class="welcome-content">
+        <h1 class="welcome-title">Welcome back, {{ request.user.first_name }}!</h1>
+        <p class="welcome-subtitle">Here's what's happening with your GSEZ administration panel today.</p>
+        <div class="welcome-actions">
+            <a href="{% url 'admin_profiles' %}" class="btn welcome-btn welcome-btn-primary">
+                <i class="bi bi-person-vcard me-2"></i>Manage Profiles
+            </a>
+            <a href="{% url 'admin_users' %}" class="btn welcome-btn welcome-btn-secondary">
+                <i class="bi bi-people me-2"></i>Manage Users
+            </a>
+        </div>
+    </div>
+    <img src="{% static 'images/dashboard-illustration.svg' %}" alt="Dashboard" class="welcome-image">
+</div>
+
+<div class="stats-container" data-aos="fade-up" data-aos-delay="100">
+    <div class="stat-card">
+        <div class="stat-content">
+            <div class="stat-icon stat-icon-users">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3 class="stat-value">{{ total_users|default:"0" }}</h3>
+            <p class="stat-label">Total Users</p>
+        </div>
+        <div class="stat-change stat-change-up">
+            <i class="bi bi-arrow-up-right"></i>
+            <span>{{ user_growth|default:"0" }}%</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-content">
+            <div class="stat-icon stat-icon-profiles">
+                <i class="bi bi-person-vcard"></i>
+            </div>
+            <h3 class="stat-value">{{ total_profiles|default:"0" }}</h3>
+            <p class="stat-label">Active Profiles</p>
+        </div>
+        <div class="stat-change stat-change-up">
+            <i class="bi bi-arrow-up-right"></i>
+            <span>{{ profile_growth|default:"0" }}%</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-content">
+            <div class="stat-icon stat-icon-companies">
+                <i class="bi bi-building"></i>
+            </div>
+            <h3 class="stat-value">{{ total_companies|default:"0" }}</h3>
+            <p class="stat-label">Registered Companies</p>
+        </div>
+        <div class="stat-change stat-change-up">
+            <i class="bi bi-arrow-up-right"></i>
+            <span>{{ company_growth|default:"0" }}%</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-content">
+            <div class="stat-icon stat-icon-access">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h3 class="stat-value">{{ total_access_logs|default:"0" }}</h3>
+            <p class="stat-label">Access Logs Today</p>
+        </div>
+        <div class="stat-change {% if access_growth < 0 %}stat-change-down{% else %}stat-change-up{% endif %}">
+            <i class="bi {% if access_growth < 0 %}bi-arrow-down-right{% else %}bi-arrow-up-right{% endif %}"></i>
+            <span>{{ access_growth|default:"0"|abs }}%</span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="chart-container" data-aos="fade-up" data-aos-delay="200">
+            <div class="chart-header">
+                <h5 class="chart-title">User Registration Trend</h5>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" title="Download CSV">
+                        <i class="bi bi-download"></i>
+                    </button>
+                    <button class="chart-action-btn" title="Refresh Data">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                    <div class="dropdown">
+                        <button class="chart-action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-bar-chart me-2"></i>View as Bar Chart</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-pie-chart me-2"></i>View as Pie Chart</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Chart Settings</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="userRegistrationChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="recent-activity" data-aos="fade-up" data-aos-delay="300">
+            <div class="activity-header">
+                <h5 class="activity-title">Recent Activity</h5>
+                <a href="{% url 'admin_activity_logs' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="activity-timeline">
+                {% for log in recent_activity %}
+                <div class="timeline-item">
+                    <div class="timeline-icon {% if log.activity_type == 'user' %}timeline-icon-user{% elif log.activity_type == 'profile' %}timeline-icon-profile{% elif log.activity_type == 'company' %}timeline-icon-company{% else %}timeline-icon-access{% endif %}">
+                        {% if log.activity_type == 'user' %}<i class="bi bi-person"></i>{% endif %}
+                        {% if log.activity_type == 'profile' %}<i class="bi bi-person-vcard"></i>{% endif %}
+                        {% if log.activity_type == 'company' %}<i class="bi bi-building"></i>{% endif %}
+                        {% if log.activity_type == 'access' %}<i class="bi bi-shield-check"></i>{% endif %}
+                    </div>
+                    <div class="timeline-content">
+                        <h6 class="timeline-title">{{ log.title }}</h6>
+                        <p class="timeline-text">{{ log.description }}</p>
+                        <div class="timeline-meta">
+                            <span class="timeline-time">{{ log.timestamp|date:"M d, Y H:i" }}</span>
+                            <span class="timeline-user">{{ log.user.get_full_name }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                    <p class="mt-3 text-muted">No recent activity found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="quick-actions" data-aos="fade-up" data-aos-delay="400">
+            <div class="actions-header">
+                <h5 class="actions-title">Quick Actions</h5>
+            </div>
+            <div class="action-grid">
+                <a href="{% url 'admin_profile_create' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h6 class="action-title">New Profile</h6>
+                    <p class="action-description">Create a new GSEZ ID profile</p>
+                </a>
+                
+                <a href="{% url 'admin_user_create' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-person-add"></i>
+                    </div>
+                    <h6 class="action-title">New User</h6>
+                    <p class="action-description">Add a new system user</p>
+                </a>
+                
+                <a href="{% url 'admin_company_create' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-building-add"></i>
+                    </div>
+                    <h6 class="action-title">New Company</h6>
+                    <p class="action-description">Register a new company</p>
+                </a>
+                
+                <a href="{% url 'generate_reports' %}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                    </div>
+                    <h6 class="action-title">Reports</h6>
+                    <p class="action-description">Generate system reports</p>
+                </a>
+            </div>
+        </div>
+        
+        <div class="chart-container" data-aos="fade-up" data-aos-delay="500">
+            <div class="chart-header">
+                <h5 class="chart-title">User Distribution</h5>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" title="Refresh Data">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-body" style="height: 250px;">
+                <canvas id="userDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // User Registration Chart
+    const userRegistrationCtx = document.getElementById('userRegistrationChart').getContext('2d');
+    const userRegistrationChart = new Chart(userRegistrationCtx, {
+        type: 'line',
+        data: {
+            labels: {% if chart_labels %}{{ chart_labels|safe }}{% else %}['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']{% endif %},
+            datasets: [{
+                label: 'New Users',
+                data: {% if user_chart_data %}{{ user_chart_data|safe }}{% else %}[12, 19, 3, 5, 2, 3, 9]{% endif %},
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderColor: '#3498db',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // User Distribution Chart
+    const userDistributionCtx = document.getElementById('userDistributionChart').getContext('2d');
+    const userDistributionChart = new Chart(userDistributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Admins', 'Staff', 'Managers', 'Regular Users'],
+            datasets: [{
+                data: {% if user_distribution %}{{ user_distribution|safe }}{% else %}[5, 15, 10, 70]{% endif %},
+                backgroundColor: [
+                    '#3498db',
+                    '#9b59b6',
+                    '#f1c40f',
+                    '#2ecc71'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            cutout: '70%'
+        }
+    });
+</script>
+{% endblock %} 
