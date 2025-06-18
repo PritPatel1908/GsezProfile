@@ -1,0 +1,524 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - GSEZ Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-lg border-0 rounded-lg mt-5">
+            {% if user.is_authenticated %}
+                <div class="card-header bg-primary text-white">
+                    <h3 class="text-center mb-0">Welcome Back</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if user.profile_photo %}
+                            <img src="{{ user.profile_photo.url }}" alt="Profile Photo" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
+                                <i class="fas fa-user fa-5x text-secondary"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center">
+                        <h4>{{ user.get_full_name }}</h4>
+                        <p class="text-muted">{{ user.email }}</p>
+                        
+                        <div class="mt-4">
+                            {% if user.user_type == 'admin' %}
+                                <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Go to Admin Dashboard
+                                </a>
+                            {% elif user.user_type == 'hr' %}
+                                <a href="{% url 'hr_dashboard' %}" class="btn btn-primary">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Go to HR Dashboard
+                                </a>
+                            {% elif user.user_type == 'security' %}
+                                <a href="{% url 'security_dashboard' %}" class="btn btn-primary">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Go to Security Dashboard
+                                </a>
+                            {% else %}
+                                <a href="{% url 'user_dashboard' %}" class="btn btn-primary">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                                </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'logout' %}" class="btn btn-outline-secondary ms-2">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card-header bg-primary text-white">
+                    <h3 class="text-center mb-0">Login</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Hidden div to store error messages -->
+                    <div id="error-data" style="display: none;"
+                        {% if form.username.errors %}
+                            {% for error in form.username.errors %}
+                                data-username-error-{{ forloop.counter }}="GSEZ ID: {{ error }}"
+                            {% endfor %}
+                            data-username-error-count="{{ form.username.errors|length }}"
+                        {% endif %}
+                        
+                        {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                data-password-error-{{ forloop.counter }}="Password: {{ error }}"
+                            {% endfor %}
+                            data-password-error-count="{{ form.password.errors|length }}"
+                        {% endif %}
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                                {% if message.tags == 'error' %}
+                                    data-message-error-{{ forloop.counter }}="{{ message }}"
+                                {% endif %}
+                            {% endfor %}
+                            data-message-error-count="{% for message in messages %}{% if message.tags == 'error' %}1{% endif %}{% endfor %}"
+                        {% endif %}
+                    ></div>
+                    
+                    <form id="loginForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">GSEZ ID</label>
+                            {{ form.username }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                            {{ form.password }}
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
+                            <a class="small text-primary" href="#">Forgot Password?</a>
+                            <button type="button" id="loginButton" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <div class="small">
+                        <a href="{% url 'register' %}" class="text-primary">Need an account? Sign up!</a>
+                        <br>
+                        <a href="{% url 'simple_register' %}" class="text-primary">Simple Sign up (username, email, password only)</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <!-- Toasts will be added here dynamically -->
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-center mb-4">About GSEZ Profile System</h5>
+                <p class="card-text">
+                    The GSEZ Profile Management System is a comprehensive platform designed to manage employee profiles, 
+                    documents, and information within the Gujarat Special Economic Zone. The system provides separate 
+                    interfaces for administrators, HR personnel, security staff, and regular users.
+                </p>
+                <div class="row mt-4 text-center">
+                    <div class="col-md-4">
+                        <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                        <h6>Secure & Reliable</h6>
+                        <p class="small text-muted">Your data is securely stored and managed</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="fas fa-users-cog fa-3x text-primary mb-3"></i>
+                        <h6>User Management</h6>
+                        <p class="small text-muted">Comprehensive user profile management</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                        <h6>Document Storage</h6>
+                        <p class="small text-muted">Centralized document management</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .toast {
+        background-color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        opacity: 1 !important;
+        min-width: 300px;
+    }
+    
+    .toast-header {
+        background-color: white;
+        border-bottom: none;
+        padding: 0.75rem 1rem;
+    }
+    
+    .toast-body {
+        padding: 0.5rem 1rem 1rem;
+    }
+    
+    .toast-icon {
+        font-size: 1.2rem;
+        margin-right: 8px;
+    }
+    
+    .toast-error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .toast-error-list li {
+        padding: 6px 0;
+        display: flex;
+        align-items: flex-start;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    
+    .toast-error-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .toast-error-list li i {
+        margin-right: 8px;
+        font-size: 0.9rem;
+        margin-top: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toastContainer = document.querySelector('.toast-container');
+        
+        // Function to create and show a toast
+        function showToast(title, messages, isError = true) {
+            // Create toast element
+            const toastEl = document.createElement('div');
+            toastEl.className = 'toast';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.setAttribute('data-bs-delay', '5000');
+            
+            // Set toast style based on type
+            if (isError) {
+                toastEl.style.borderLeft = '4px solid #dc3545'; // Red for error
+            } else {
+                toastEl.style.borderLeft = '4px solid #198754'; // Green for success
+            }
+            
+            // Create toast content
+            let listHTML = '';
+            messages.forEach(message => {
+                const icon = isError ? 
+                    '<i class="fas fa-exclamation-circle" style="color: #dc3545;"></i>' : 
+                    '<i class="fas fa-check-circle" style="color: #198754;"></i>';
+                listHTML += `<li>${icon} ${message}</li>`;
+            });
+            
+            toastEl.innerHTML = `
+                <div class="toast-header">
+                    <i class="fas fa-${isError ? 'exclamation' : 'check'}-circle toast-icon" style="color: ${isError ? '#dc3545' : '#198754'};"></i>
+                    <strong class="me-auto">${title}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <ul class="toast-error-list">
+                        ${listHTML}
+                    </ul>
+                </div>
+            `;
+            
+            // Add toast to container
+            toastContainer.appendChild(toastEl);
+            
+            // Initialize and show the toast
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+            
+            // Remove toast from DOM after it's hidden
+            toastEl.addEventListener('hidden.bs.toast', function() {
+                toastEl.remove();
+            });
+        }
+        
+        // Function to show error toast (for backward compatibility)
+        function showErrorToast(title, errorMessages) {
+            showToast(title, errorMessages, true);
+        }
+        
+        // Get error data from the hidden div on page load
+        const errorData = document.getElementById('error-data');
+        if (errorData) {
+            const errorMessages = [];
+            
+            // Get username errors
+            const usernameErrorCount = errorData.getAttribute('data-username-error-count');
+            if (usernameErrorCount) {
+                for (let i = 1; i <= parseInt(usernameErrorCount); i++) {
+                    const error = errorData.getAttribute(`data-username-error-${i}`);
+                    if (error) errorMessages.push(error);
+                }
+            }
+            
+            // Get password errors
+            const passwordErrorCount = errorData.getAttribute('data-password-error-count');
+            if (passwordErrorCount) {
+                for (let i = 1; i <= parseInt(passwordErrorCount); i++) {
+                    const error = errorData.getAttribute(`data-password-error-${i}`);
+                    if (error) errorMessages.push(error);
+                }
+            }
+            
+            // Get message errors
+            const messageErrorCount = errorData.getAttribute('data-message-error-count');
+            if (messageErrorCount) {
+                for (let i = 1; i <= parseInt(messageErrorCount); i++) {
+                    const error = errorData.getAttribute(`data-message-error-${i}`);
+                    if (error) errorMessages.push(error);
+                }
+            }
+            
+            // Show toast if there are error messages
+            if (errorMessages.length > 0) {
+                showErrorToast("Login Error", errorMessages);
+            }
+        }
+        
+        // Handle login button click - AJAX approach
+        const loginButton = document.getElementById('loginButton');
+        const loginForm = document.getElementById('loginForm');
+        
+        if (loginButton && loginForm) {
+            loginButton.addEventListener('click', function() {
+                // Get form data
+                const gsezid = document.getElementById('{{ form.username.id_for_label }}').value;
+                const password = document.getElementById('{{ form.password.id_for_label }}').value;
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                // Disable the button to prevent multiple submissions
+                loginButton.disabled = true;
+                loginButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('username', gsezid);
+                formData.append('password', password);
+                formData.append('csrfmiddlewaretoken', csrfToken);
+                
+                // Send AJAX request
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    // Check if response is ok
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    
+                    // Check content type to handle JSON properly
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json().catch(error => {
+                            console.error('JSON parse error:', error);
+                            throw new Error('Invalid JSON response from server');
+                        });
+                    } else {
+                        return response.text().then(text => {
+                            console.log('Raw response:', text);
+                            try {
+                                return JSON.parse(text);
+                            } catch (e) {
+                                console.error('JSON parse error:', e);
+                                console.error('Response text was:', text);
+                                
+                                // Instead of throwing an error, submit the form traditionally
+                                console.log('Falling back to traditional form submission...');
+                                const traditionalForm = document.createElement('form');
+                                traditionalForm.method = 'POST';
+                                traditionalForm.action = window.location.href;
+                                
+                                // Add CSRF token
+                                const csrfInput = document.createElement('input');
+                                csrfInput.type = 'hidden';
+                                csrfInput.name = 'csrfmiddlewaretoken';
+                                csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                                traditionalForm.appendChild(csrfInput);
+                                
+                                // Add username field
+                                const usernameInput = document.createElement('input');
+                                usernameInput.type = 'hidden';
+                                usernameInput.name = 'username';
+                                usernameInput.value = document.getElementById('{{ form.username.id_for_label }}').value;
+                                traditionalForm.appendChild(usernameInput);
+                                
+                                // Add password field
+                                const passwordInput = document.createElement('input');
+                                passwordInput.type = 'hidden';
+                                passwordInput.name = 'password';
+                                passwordInput.value = document.getElementById('{{ form.password.id_for_label }}').value;
+                                traditionalForm.appendChild(passwordInput);
+                                
+                                // Add traditional submit flag
+                                const traditionalSubmitInput = document.createElement('input');
+                                traditionalSubmitInput.type = 'hidden';
+                                traditionalSubmitInput.name = 'use_traditional_submit';
+                                traditionalSubmitInput.value = 'true';
+                                traditionalForm.appendChild(traditionalSubmitInput);
+                                
+                                // Add to document and submit
+                                document.body.appendChild(traditionalForm);
+                                traditionalForm.submit();
+                                return null; // Return null to prevent further processing
+                            }
+                        });
+                    }
+                })
+                .then(data => {
+                    if (!data) return; // Skip if we're doing traditional form submission
+                    
+                    if (data.success) {
+                        // Show success toast with user details
+                        if (data.user_details) {
+                            const userDetails = data.user_details;
+                            const userMessages = [
+                                `GSEZ ID: ${userDetails.gsezid}`,
+                                `Name: ${userDetails.name}`,
+                                `Email: ${userDetails.email}`,
+                                `User Type: ${userDetails.user_type.charAt(0).toUpperCase() + userDetails.user_type.slice(1)}`,
+                                `Login Successful! Redirecting...`
+                            ];
+                            
+                            showToast("Login Successful", userMessages, false);
+                            
+                            // Redirect after a short delay to show the toast
+                            setTimeout(function() {
+                                window.location.href = data.redirect_url;
+                            }, 2000);
+                        } else {
+                            // Redirect immediately if no user details
+                            window.location.href = data.redirect_url;
+                        }
+                    } else {
+                        // Show error messages in toast
+                        const errorMessages = [];
+                        
+                        // Process form field errors
+                        if (data.errors) {
+                            // Process username errors
+                            if (data.errors.username) {
+                                data.errors.username.forEach(error => {
+                                    errorMessages.push(`GSEZ ID: ${error}`);
+                                });
+                            }
+                            
+                            // Process password errors
+                            if (data.errors.password) {
+                                data.errors.password.forEach(error => {
+                                    errorMessages.push(`Password: ${error}`);
+                                });
+                            }
+                            
+                            // Process non-field errors
+                            if (data.errors.__all__) {
+                                data.errors.__all__.forEach(error => {
+                                    errorMessages.push(error);
+                                });
+                            }
+                        }
+                        
+                        // Process message errors
+                        if (data.message) {
+                            errorMessages.push(data.message);
+                        }
+                        
+                        // Show toast with errors
+                        if (errorMessages.length > 0) {
+                            showErrorToast("Login Error", errorMessages);
+                        } else {
+                            // If no specific errors were found but login failed
+                            showErrorToast("Login Error", ["Invalid login credentials. Please try again."]);
+                        }
+                        
+                        // Re-enable the login button
+                        loginButton.disabled = false;
+                        loginButton.innerHTML = 'Login';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during login:', error);
+                    
+                    // Show a more specific error message
+                    let errorMessage = "An unexpected error occurred. Please try again.";
+                    if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    showErrorToast("Login Error", [errorMessage]);
+                    
+                    // Re-enable the login button
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = 'Login';
+                    
+                    // For debugging purposes, try a traditional form submission after 3 seconds
+                    // if the user doesn't refresh the page
+                    setTimeout(() => {
+                        console.log('Creating traditional form for fallback...');
+                        const traditionalForm = document.createElement('form');
+                        traditionalForm.method = 'POST';
+                        traditionalForm.action = window.location.href;
+                        
+                        // Add CSRF token
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = 'csrfmiddlewaretoken';
+                        csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        traditionalForm.appendChild(csrfInput);
+                        
+                        // Add username field
+                        const usernameInput = document.createElement('input');
+                        usernameInput.type = 'hidden';
+                        usernameInput.name = 'username';
+                        usernameInput.value = document.getElementById('{{ form.username.id_for_label }}').value;
+                        traditionalForm.appendChild(usernameInput);
+                        
+                        // Add password field
+                        const passwordInput = document.createElement('input');
+                        passwordInput.type = 'hidden';
+                        passwordInput.name = 'password';
+                        passwordInput.value = document.getElementById('{{ form.password.id_for_label }}').value;
+                        traditionalForm.appendChild(passwordInput);
+                        
+                        // Add to document and submit
+                        document.body.appendChild(traditionalForm);
+                        console.log('Submitting traditional form...');
+                        traditionalForm.submit();
+                    }, 3000);
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
