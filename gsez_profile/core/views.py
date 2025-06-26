@@ -496,6 +496,7 @@ def admin_manage_users(request):
     # Handle batch actions
     if request.method == 'POST':
         print("POST received:", request.POST)
+        print("POST data keys:", list(request.POST.keys()))
         
         # Check for source field to differentiate between bulk actions and other actions
         source = request.POST.get('source', '')
@@ -512,7 +513,16 @@ def admin_manage_users(request):
             if selected_users:
                 is_printed = bulk_action == 'mark_printed'
                 try:
+                    # Log the users before update
+                    before_users = list(User.objects.filter(id__in=selected_users).values('id', 'username', 'is_printed'))
+                    print(f"Users before update: {before_users}")
+                    
                     updated_count = User.objects.filter(id__in=selected_users).update(is_printed=is_printed)
+                    
+                    # Log the users after update
+                    after_users = list(User.objects.filter(id__in=selected_users).values('id', 'username', 'is_printed'))
+                    print(f"Users after update: {after_users}")
+                    
                     action_text = "printed" if is_printed else "not printed"
                     print(f"Updated {updated_count} users to is_printed={is_printed}")
                     messages.success(request, f'{updated_count} users marked as {action_text} successfully.')
@@ -1755,9 +1765,11 @@ def admin_edit_document(request, document_id):
 @user_passes_test(is_admin)
 def admin_delete_document(request, document_id):
     document = get_object_or_404(Document, id=document_id)
-    document.delete()
-    messages.success(request, 'Document deleted successfully.')
-    return redirect('admin_manage_documents')
+    
+    if request.method == 'GET' or request.method == 'POST':
+        document.delete()
+        messages.success(request, 'Document deleted successfully.')
+        return redirect('admin_manage_documents')
 
 @login_required
 def user_documents(request):

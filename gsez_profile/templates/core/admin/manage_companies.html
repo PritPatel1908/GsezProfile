@@ -71,11 +71,11 @@
                                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ company.id }}" title="Edit Company">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <form method="post" action="{% url 'admin_manage_companies' %}" style="display: inline;">
+                                    <form method="post" action="{% url 'admin_manage_companies' %}" style="display: inline;" class="delete-company-form">
                                         {% csrf_token %}
                                         <input type="hidden" name="company_id" value="{{ company.id }}">
                                         <input type="hidden" name="action" value="delete">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete Company">
+                                        <button type="button" class="btn btn-sm btn-danger delete-company-btn" title="Delete Company">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -141,4 +141,46 @@
     });
 </script>
 {% endif %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listeners to delete company buttons
+        document.querySelectorAll('.delete-company-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Find the modal element
+                const deleteModal = document.getElementById('deleteConfirmModal');
+                if (!deleteModal) {
+                    // If modal not found, submit the form directly
+                    this.closest('form').submit();
+                    return;
+                }
+                
+                // Get the modal instance
+                const modal = new bootstrap.Modal(deleteModal);
+                
+                // Show the modal
+                modal.show();
+                
+                // Set up the confirmation button
+                const confirmBtn = document.getElementById('confirmDeleteBtn');
+                if (confirmBtn) {
+                    const form = this.closest('form');
+                    // Remove previous event listeners
+                    const newConfirmBtn = confirmBtn.cloneNode(true);
+                    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+                    
+                    // Add new event listener
+                    newConfirmBtn.addEventListener('click', function() {
+                        modal.hide();
+                        setTimeout(() => {
+                            form.submit();
+                        }, 300);
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %} 

@@ -388,4 +388,41 @@ input[type="checkbox"] {
         flex-direction: column;
         gap: 1rem;
     }
+}
+
+/* Delete Confirmation Modal */
+#deleteConfirmModal .modal-content {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+#deleteConfirmModal .modal-header {
+    border-radius: 10px 10px 0 0;
+    padding: 15px 20px;
+}
+
+#deleteConfirmModal .modal-body {
+    padding: 25px 20px;
+    font-size: 1.1rem;
+}
+
+#deleteConfirmModal .modal-footer {
+    border-top: none;
+    padding: 15px 20px;
+}
+
+#deleteConfirmModal .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+#confirmDeleteBtn {
+    font-weight: 600;
+    padding: 8px 20px;
+    transition: all 0.2s ease;
+}
+
+#confirmDeleteBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 } 

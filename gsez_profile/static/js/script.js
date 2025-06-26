@@ -757,6 +757,197 @@ function initializeModals() {
 
 // Function to setup delete confirmation for all delete buttons/forms
 function setupDeleteConfirmation() {
+    // Get modal elements
+    const deleteModal = document.getElementById('deleteConfirmModal');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const deleteMessage = document.getElementById('deleteConfirmMessage');
+    
+    // Skip if modal elements don't exist
+    if (!deleteModal || !confirmBtn) {
+        console.warn('Delete confirmation modal not found, using browser confirm instead');
+        setupFallbackDeleteConfirmation();
+        return;
+    }
+    
+    // Create Bootstrap modal instance if Bootstrap is available
+    let modal = null;
+    if (typeof bootstrap !== 'undefined') {
+        modal = new bootstrap.Modal(deleteModal);
+    } else {
+        console.warn('Bootstrap is not loaded, using browser confirm instead');
+        setupFallbackDeleteConfirmation();
+        return;
+    }
+    
+    // Variable to store the callback function when delete is confirmed
+    let confirmCallback = null;
+    let currentForm = null;
+    
+    // Handle forms with delete action in URL
+    document.querySelectorAll('form[action*="delete"]').forEach(form => {
+        // Skip if already processed or has custom delete handler
+        if (form.hasAttribute('data-delete-confirmation') || form.classList.contains('delete-user-form')) {
+            return;
+        }
+
+        form.setAttribute('data-delete-confirmation', 'true');
+
+        // Override the submit event
+        form.addEventListener('submit', function(e) {
+            console.log('Delete form submit intercepted');
+            e.preventDefault();
+            
+            // Store reference to the current form
+            currentForm = form;
+            
+            // Set the confirmation callback
+            confirmCallback = () => {
+                console.log('Submitting form after confirmation');
+                // Submit the form directly without using preventDefault
+                form.submit();
+            };
+            
+            // Show the modal
+            modal.show();
+        });
+    });
+
+    // Handle forms with hidden input[name="action"][value="delete"]
+    document.querySelectorAll('form').forEach(form => {
+        // Skip if already processed or already handled by previous selector or has custom delete handler
+        if (form.hasAttribute('data-delete-confirmation') || 
+            form.getAttribute('action')?.includes('delete') ||
+            form.classList.contains('delete-user-form')) {
+            return;
+        }
+
+        // Check if the form has a hidden input with name="action" and value="delete"
+        const deleteInput = form.querySelector('input[name="action"][value="delete"]');
+        if (deleteInput) {
+            console.log('Found form with delete action input:', form);
+            form.setAttribute('data-delete-confirmation', 'true');
+
+            // Override the submit event
+            form.addEventListener('submit', function(e) {
+                console.log('Delete form submit intercepted');
+                e.preventDefault();
+                
+                // Store reference to the current form
+                currentForm = form;
+                
+                // Set the confirmation callback
+                confirmCallback = () => {
+                    console.log('Submitting form after confirmation');
+                    // Submit the form directly
+                    form.submit();
+                };
+                
+                // Show the modal
+                modal.show();
+            });
+        }
+    });
+
+    // Handle delete buttons that are not in forms with delete action
+    document.querySelectorAll('button.btn-danger:not([data-delete-confirmation]), a.btn-danger:not([data-delete-confirmation])').forEach(button => {
+        // Skip if already processed or has custom delete handler
+        if (button.hasAttribute('data-delete-confirmation') || button.classList.contains('delete-user-btn')) {
+            return;
+        }
+
+        button.setAttribute('data-delete-confirmation', 'true');
+
+        // Store the original click event
+        const originalClick = button.onclick;
+        
+        // Override the click event
+        button.addEventListener('click', function(e) {
+            console.log('Delete button clicked');
+            e.preventDefault();
+            
+            // Set the confirmation callback
+            confirmCallback = () => {
+                // Execute the original click handler if it exists
+                if (originalClick) {
+                    originalClick.call(this, e);
+                }
+
+                // If it's a link, navigate to the href
+                if (button.tagName === 'A' && button.href) {
+                    window.location.href = button.href;
+                }
+
+                // If it's in a form, submit the form
+                const parentForm = button.closest('form');
+                if (parentForm) {
+                    parentForm.submit();
+                }
+            };
+            
+            // Show the modal
+            modal.show();
+        });
+    });
+
+    // Handle forms that target delete URLs
+    document.querySelectorAll('form[method="get"][action*="delete"]').forEach(form => {
+        // Skip if already processed
+        if (form.hasAttribute('data-delete-confirmation')) {
+            return;
+        }
+
+        form.setAttribute('data-delete-confirmation', 'true');
+
+        // Override the submit event
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Store reference to the current form
+            currentForm = form;
+            
+            // Set the confirmation callback
+            confirmCallback = () => {
+                form.submit();
+            };
+            
+            // Show the modal
+            modal.show();
+        });
+    });
+    
+    // Add click event to the confirm button in the modal
+    confirmBtn.addEventListener('click', function() {
+        console.log('Confirm button clicked');
+        
+        // Hide the modal
+        modal.hide();
+        
+        // Execute the callback if it exists
+        if (confirmCallback && typeof confirmCallback === 'function') {
+            console.log('Executing confirmation callback with delay');
+            
+            // Use a small delay to allow modal to close
+            setTimeout(() => {
+                console.log('Executing callback now');
+                confirmCallback();
+                console.log('Callback executed');
+                confirmCallback = null; // Reset the callback
+                currentForm = null; // Reset the current form
+            }, 300);
+        } else {
+            console.log('No confirmation callback found');
+        }
+    });
+    
+    // Reset callback when modal is dismissed
+    deleteModal.addEventListener('hidden.bs.modal', function() {
+        confirmCallback = null;
+        currentForm = null;
+    });
+}
+
+// Fallback function using browser's default confirm dialog
+function setupFallbackDeleteConfirmation() {
     // Handle forms with delete action in URL
     document.querySelectorAll('form[action*="delete"]').forEach(form => {
         // Skip if already processed
@@ -774,7 +965,7 @@ function setupDeleteConfirmation() {
             e.preventDefault();
 
             // Show confirmation dialog
-            if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
+            if (confirm('Are you sure you want to delete this record?')) {
                 // If confirmed, remove our handler and submit
                 form.onsubmit = originalSubmit;
                 form.submit();
@@ -802,7 +993,7 @@ function setupDeleteConfirmation() {
                 e.preventDefault();
 
                 // Show confirmation dialog
-                if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
+                if (confirm('Are you sure you want to delete this record?')) {
                     // If confirmed, remove our handler and submit
                     form.onsubmit = originalSubmit;
                     form.submit();
@@ -828,7 +1019,7 @@ function setupDeleteConfirmation() {
             e.preventDefault();
 
             // Show confirmation dialog
-            if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
+            if (confirm('Are you sure you want to delete this record?')) {
                 // If confirmed, execute the original click handler
                 if (originalClick) {
                     originalClick.call(this, e);
@@ -857,19 +1048,17 @@ function setupDeleteConfirmation() {
 
         form.setAttribute('data-delete-confirmation', 'true');
 
-        // Store the original submit event
-        const originalSubmit = form.onsubmit;
-
         // Override the submit event
-        form.onsubmit = function (e) {
+        form.addEventListener('submit', function(e) {
             e.preventDefault();
-
-            // Show confirmation dialog
-            if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
-                // If confirmed, remove our handler and submit
-                form.onsubmit = originalSubmit;
+            
+            // Set the confirmation callback
+            confirmCallback = () => {
                 form.submit();
-            }
-        };
+            };
+            
+            // Show the modal
+            modal.show();
+        });
     });
 } 
