@@ -56,31 +56,9 @@
                     <h3 class="text-center mb-0">Login</h3>
                 </div>
                 <div class="card-body">
-                    <!-- Hidden div to store error messages -->
-                    <div id="error-data" style="display: none;"
-                        {% if form.username.errors %}
-                            {% for error in form.username.errors %}
-                                data-username-error-{{ forloop.counter }}="GSEZ ID: {{ error }}"
-                            {% endfor %}
-                            data-username-error-count="{{ form.username.errors|length }}"
-                        {% endif %}
-                        
-                        {% if form.password.errors %}
-                            {% for error in form.password.errors %}
-                                data-password-error-{{ forloop.counter }}="Password: {{ error }}"
-                            {% endfor %}
-                            data-password-error-count="{{ form.password.errors|length }}"
-                        {% endif %}
-                        
-                        {% if messages %}
-                            {% for message in messages %}
-                                {% if message.tags == 'error' %}
-                                    data-message-error-{{ forloop.counter }}="{{ message }}"
-                                {% endif %}
-                            {% endfor %}
-                            data-message-error-count="{% for message in messages %}{% if message.tags == 'error' %}1{% endif %}{% endfor %}"
-                        {% endif %}
-                    ></div>
+                    <!-- Alert for displaying errors -->
+                    <div id="login-alert" class="alert alert-danger d-none">
+                    </div>
                     
                     <form id="loginForm">
                         {% csrf_token %}
@@ -88,11 +66,13 @@
                         <div class="mb-3">
                             <label for="{{ form.username.id_for_label }}" class="form-label">GSEZ ID</label>
                             {{ form.username }}
+                            <div id="username-error" class="invalid-feedback"></div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
                             {{ form.password }}
+                            <div id="password-error" class="invalid-feedback"></div>
                         </div>
                         
                         <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
@@ -196,132 +176,89 @@
         font-size: 0.9rem;
         margin-top: 3px;
     }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const toastContainer = document.querySelector('.toast-container');
-        
-        // Function to create and show a toast
-        function showToast(title, messages, isError = true) {
-            // Create toast element
-            const toastEl = document.createElement('div');
-            toastEl.className = 'toast';
-            toastEl.setAttribute('role', 'alert');
-            toastEl.setAttribute('aria-live', 'assertive');
-            toastEl.setAttribute('aria-atomic', 'true');
-            toastEl.setAttribute('data-bs-delay', '5000');
-            
-            // Set toast style based on type
-            if (isError) {
-                toastEl.style.borderLeft = '4px solid #dc3545'; // Red for error
-            } else {
-                toastEl.style.borderLeft = '4px solid #198754'; // Green for success
-            }
-            
-            // Create toast content
-            let listHTML = '';
-            messages.forEach(message => {
-                const icon = isError ? 
-                    '<i class="fas fa-exclamation-circle" style="color: #dc3545;"></i>' : 
-                    '<i class="fas fa-check-circle" style="color: #198754;"></i>';
-                listHTML += `<li>${icon} ${message}</li>`;
-            });
-            
-            toastEl.innerHTML = `
-                <div class="toast-header">
-                    <i class="fas fa-${isError ? 'exclamation' : 'check'}-circle toast-icon" style="color: ${isError ? '#dc3545' : '#198754'};"></i>
-                    <strong class="me-auto">${title}</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    <ul class="toast-error-list">
-                        ${listHTML}
-                    </ul>
-                </div>
-            `;
-            
-            // Add toast to container
-            toastContainer.appendChild(toastEl);
-            
-            // Initialize and show the toast
-            const toast = new bootstrap.Toast(toastEl);
-            toast.show();
-            
-            // Remove toast from DOM after it's hidden
-            toastEl.addEventListener('hidden.bs.toast', function() {
-                toastEl.remove();
-            });
-        }
-        
-        // Function to show error toast (for backward compatibility)
-        function showErrorToast(title, errorMessages) {
-            showToast(title, errorMessages, true);
-        }
-        
-        // Get error data from the hidden div on page load
-        const errorData = document.getElementById('error-data');
-        if (errorData) {
-            const errorMessages = [];
-            
-            // Get username errors
-            const usernameErrorCount = errorData.getAttribute('data-username-error-count');
-            if (usernameErrorCount) {
-                for (let i = 1; i <= parseInt(usernameErrorCount); i++) {
-                    const error = errorData.getAttribute(`data-username-error-${i}`);
-                    if (error) errorMessages.push(error);
-                }
-            }
-            
-            // Get password errors
-            const passwordErrorCount = errorData.getAttribute('data-password-error-count');
-            if (passwordErrorCount) {
-                for (let i = 1; i <= parseInt(passwordErrorCount); i++) {
-                    const error = errorData.getAttribute(`data-password-error-${i}`);
-                    if (error) errorMessages.push(error);
-                }
-            }
-            
-            // Get message errors
-            const messageErrorCount = errorData.getAttribute('data-message-error-count');
-            if (messageErrorCount) {
-                for (let i = 1; i <= parseInt(messageErrorCount); i++) {
-                    const error = errorData.getAttribute(`data-message-error-${i}`);
-                    if (error) errorMessages.push(error);
-                }
-            }
-            
-            // Show toast if there are error messages
-            if (errorMessages.length > 0) {
-                showErrorToast("Login Error", errorMessages);
-            }
-        }
-        
-        // Handle login button click - AJAX approach
-        const loginButton = document.getElementById('loginButton');
         const loginForm = document.getElementById('loginForm');
+        const loginButton = document.getElementById('loginButton');
+        const loginAlert = document.getElementById('login-alert');
+        const usernameInput = document.getElementById('{{ form.username.id_for_label }}');
+        const passwordInput = document.getElementById('{{ form.password.id_for_label }}');
+        const usernameError = document.getElementById('username-error');
+        const passwordError = document.getElementById('password-error');
         
+        // Function to show error message in the alert box
+        function showAlert(message) {
+            loginAlert.textContent = message;
+            loginAlert.classList.remove('d-none');
+        }
+        
+        // Function to hide the alert box
+        function hideAlert() {
+            loginAlert.textContent = '';
+            loginAlert.classList.add('d-none');
+        }
+        
+        // Function to show field error
+        function showFieldError(field, errorElement, message) {
+            field.classList.add('is-invalid');
+            errorElement.textContent = message;
+        }
+        
+        // Function to clear field errors
+        function clearFieldError(field, errorElement) {
+            field.classList.remove('is-invalid');
+            errorElement.textContent = '';
+        }
+        
+        // Function to clear all errors
+        function clearAllErrors() {
+            hideAlert();
+            clearFieldError(usernameInput, usernameError);
+            clearFieldError(passwordInput, passwordError);
+        }
+        
+        // Handle form submission
         if (loginButton && loginForm) {
             loginButton.addEventListener('click', function() {
+                // Clear previous errors
+                clearAllErrors();
+                
                 // Get form data
-                const gsezid = document.getElementById('{{ form.username.id_for_label }}').value;
-                const password = document.getElementById('{{ form.password.id_for_label }}').value;
+                const gsezid = usernameInput.value.trim();
+                const password = passwordInput.value;
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                // Basic validation
+                if (!gsezid) {
+                    showFieldError(usernameInput, usernameError, 'GSEZ ID is required');
+                    return;
+                }
+                
+                if (!password) {
+                    showFieldError(passwordInput, passwordError, 'Password is required');
+                    return;
+                }
                 
                 // Disable the button to prevent multiple submissions
                 loginButton.disabled = true;
                 loginButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
                 
-                // Create form data
+                // Create form data for AJAX
                 const formData = new FormData();
                 formData.append('username', gsezid);
                 formData.append('password', password);
                 formData.append('csrfmiddlewaretoken', csrfToken);
                 
-                // Send AJAX request
-                fetch(window.location.href, {
+                // Try AJAX first
+                fetch('{% url "login" %}', {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -329,195 +266,109 @@
                     }
                 })
                 .then(response => {
-                    console.log('Response status:', response.status);
-                    console.log('Response headers:', response.headers);
-                    
-                    // Check if response is ok
                     if (!response.ok) {
-                        throw new Error(`Server error: ${response.status}`);
+                        throw new Error('Network response was not ok');
                     }
-                    
-                    // Check content type to handle JSON properly
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json().catch(error => {
-                            console.error('JSON parse error:', error);
-                            throw new Error('Invalid JSON response from server');
-                        });
-                    } else {
-                        return response.text().then(text => {
-                            console.log('Raw response:', text);
-                            try {
-                                return JSON.parse(text);
-                            } catch (e) {
-                                console.error('JSON parse error:', e);
-                                console.error('Response text was:', text);
-                                
-                                // Instead of throwing an error, submit the form traditionally
-                                console.log('Falling back to traditional form submission...');
-                                const traditionalForm = document.createElement('form');
-                                traditionalForm.method = 'POST';
-                                traditionalForm.action = window.location.href;
-                                
-                                // Add CSRF token
-                                const csrfInput = document.createElement('input');
-                                csrfInput.type = 'hidden';
-                                csrfInput.name = 'csrfmiddlewaretoken';
-                                csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                                traditionalForm.appendChild(csrfInput);
-                                
-                                // Add username field
-                                const usernameInput = document.createElement('input');
-                                usernameInput.type = 'hidden';
-                                usernameInput.name = 'username';
-                                usernameInput.value = document.getElementById('{{ form.username.id_for_label }}').value;
-                                traditionalForm.appendChild(usernameInput);
-                                
-                                // Add password field
-                                const passwordInput = document.createElement('input');
-                                passwordInput.type = 'hidden';
-                                passwordInput.name = 'password';
-                                passwordInput.value = document.getElementById('{{ form.password.id_for_label }}').value;
-                                traditionalForm.appendChild(passwordInput);
-                                
-                                // Add traditional submit flag
-                                const traditionalSubmitInput = document.createElement('input');
-                                traditionalSubmitInput.type = 'hidden';
-                                traditionalSubmitInput.name = 'use_traditional_submit';
-                                traditionalSubmitInput.value = 'true';
-                                traditionalForm.appendChild(traditionalSubmitInput);
-                                
-                                // Add to document and submit
-                                document.body.appendChild(traditionalForm);
-                                traditionalForm.submit();
-                                return null; // Return null to prevent further processing
-                            }
-                        });
-                    }
+                    return response.json();
                 })
                 .then(data => {
-                    if (!data) return; // Skip if we're doing traditional form submission
-                    
                     if (data.success) {
-                        // Show success toast with user details
-                        if (data.user_details) {
-                            const userDetails = data.user_details;
-                            const userMessages = [
-                                `GSEZ ID: ${userDetails.gsezid}`,
-                                `Name: ${userDetails.name}`,
-                                `Email: ${userDetails.email}`,
-                                `User Type: ${userDetails.user_type.charAt(0).toUpperCase() + userDetails.user_type.slice(1)}`,
-                                `Login Successful! Redirecting...`
-                            ];
-                            
-                            showToast("Login Successful", userMessages, false);
-                            
-                            // Redirect after a short delay to show the toast
-                            setTimeout(function() {
-                                window.location.href = data.redirect_url;
-                            }, 2000);
-                        } else {
-                            // Redirect immediately if no user details
-                            window.location.href = data.redirect_url;
-                        }
+                        // Redirect on success
+                        window.location.href = data.redirect_url;
                     } else {
-                        // Show error messages in toast
-                        const errorMessages = [];
-                        
-                        // Process form field errors
-                        if (data.errors) {
-                            // Process username errors
-                            if (data.errors.username) {
-                                data.errors.username.forEach(error => {
-                                    errorMessages.push(`GSEZ ID: ${error}`);
-                                });
-                            }
-                            
-                            // Process password errors
-                            if (data.errors.password) {
-                                data.errors.password.forEach(error => {
-                                    errorMessages.push(`Password: ${error}`);
-                                });
-                            }
-                            
-                            // Process non-field errors
-                            if (data.errors.__all__) {
-                                data.errors.__all__.forEach(error => {
-                                    errorMessages.push(error);
-                                });
-                            }
-                        }
-                        
-                        // Process message errors
+                        // Show error messages
                         if (data.message) {
-                            errorMessages.push(data.message);
+                            showAlert(data.message);
                         }
                         
-                        // Show toast with errors
-                        if (errorMessages.length > 0) {
-                            showErrorToast("Login Error", errorMessages);
-                        } else {
-                            // If no specific errors were found but login failed
-                            showErrorToast("Login Error", ["Invalid login credentials. Please try again."]);
+                        if (data.errors) {
+                            for (const field in data.errors) {
+                                if (field === 'username') {
+                                    showFieldError(usernameInput, usernameError, data.errors[field][0]);
+                                } else if (field === 'password') {
+                                    showFieldError(passwordInput, passwordError, data.errors[field][0]);
+                                } else if (field === '__all__') {
+                                    showAlert(data.errors[field][0]);
+                                }
+                            }
                         }
                         
-                        // Re-enable the login button
+                        // Re-enable the button
                         loginButton.disabled = false;
                         loginButton.innerHTML = 'Login';
                     }
                 })
                 .catch(error => {
-                    console.error('Error during login:', error);
+                    console.error('Error during AJAX login:', error);
                     
-                    // Show a more specific error message
-                    let errorMessage = "An unexpected error occurred. Please try again.";
-                    if (error.message) {
-                        errorMessage = error.message;
-                    }
+                    // Fall back to traditional form submission on AJAX failure
+                    const fallbackForm = document.createElement('form');
+                    fallbackForm.method = 'POST';
+                    fallbackForm.action = '{% url "login" %}';
+                    fallbackForm.style.display = 'none';
                     
-                    showErrorToast("Login Error", [errorMessage]);
+                    // Add all form fields
+                    const usernameField = document.createElement('input');
+                    usernameField.type = 'text';
+                    usernameField.name = 'username';
+                    usernameField.value = gsezid;
                     
-                    // Re-enable the login button
-                    loginButton.disabled = false;
-                    loginButton.innerHTML = 'Login';
+                    const passwordField = document.createElement('input');
+                    passwordField.type = 'password';
+                    passwordField.name = 'password';
+                    passwordField.value = password;
                     
-                    // For debugging purposes, try a traditional form submission after 3 seconds
-                    // if the user doesn't refresh the page
-                    setTimeout(() => {
-                        console.log('Creating traditional form for fallback...');
-                        const traditionalForm = document.createElement('form');
-                        traditionalForm.method = 'POST';
-                        traditionalForm.action = window.location.href;
-                        
-                        // Add CSRF token
-                        const csrfInput = document.createElement('input');
-                        csrfInput.type = 'hidden';
-                        csrfInput.name = 'csrfmiddlewaretoken';
-                        csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                        traditionalForm.appendChild(csrfInput);
-                        
-                        // Add username field
-                        const usernameInput = document.createElement('input');
-                        usernameInput.type = 'hidden';
-                        usernameInput.name = 'username';
-                        usernameInput.value = document.getElementById('{{ form.username.id_for_label }}').value;
-                        traditionalForm.appendChild(usernameInput);
-                        
-                        // Add password field
-                        const passwordInput = document.createElement('input');
-                        passwordInput.type = 'hidden';
-                        passwordInput.name = 'password';
-                        passwordInput.value = document.getElementById('{{ form.password.id_for_label }}').value;
-                        traditionalForm.appendChild(passwordInput);
-                        
-                        // Add to document and submit
-                        document.body.appendChild(traditionalForm);
-                        console.log('Submitting traditional form...');
-                        traditionalForm.submit();
-                    }, 3000);
+                    const csrfField = document.createElement('input');
+                    csrfField.type = 'hidden';
+                    csrfField.name = 'csrfmiddlewaretoken';
+                    csrfField.value = csrfToken;
+                    
+                    const traditionalFlag = document.createElement('input');
+                    traditionalFlag.type = 'hidden';
+                    traditionalFlag.name = 'use_traditional_submit';
+                    traditionalFlag.value = 'true';
+                    
+                    // Append fields to the form
+                    fallbackForm.appendChild(usernameField);
+                    fallbackForm.appendChild(passwordField);
+                    fallbackForm.appendChild(csrfField);
+                    fallbackForm.appendChild(traditionalFlag);
+                    
+                    // Append form to the body and submit it
+                    document.body.appendChild(fallbackForm);
+                    fallbackForm.submit();
                 });
             });
+            
+            // Also allow form submission with Enter key
+            loginForm.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loginButton.click();
+                }
+            });
         }
+        
+        // Check for any server-side errors passed in the page load
+        {% if form.errors %}
+            {% for field, errors in form.errors.items %}
+                {% if field == 'username' %}
+                    showFieldError(usernameInput, usernameError, "{{ errors.0 }}");
+                {% elif field == 'password' %}
+                    showFieldError(passwordInput, passwordError, "{{ errors.0 }}");
+                {% elif field == '__all__' %}
+                    showAlert("{{ errors.0 }}");
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                    showAlert("{{ message }}");
+                {% endif %}
+            {% endfor %}
+        {% endif %}
     });
 </script>
 {% endblock %}

@@ -17,7 +17,7 @@ class CustomUserAdmin(UserAdmin):
                                           'current_employer_remarks', 'current_employer_rating')}),
         ('Previous Employment', {'fields': ('previous_employers',)}),
         ('Education', {'fields': ('qualifications',)}),
-        ('Status', {'fields': ('status', 'is_verified', 'qr_code', 'user_type', 'is_required_profile_detail')}),
+        ('Status', {'fields': ('status', 'is_verified', 'qr_code', 'user_type', 'is_required_profile_detail', 'is_printed')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )

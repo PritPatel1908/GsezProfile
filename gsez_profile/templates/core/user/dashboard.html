@@ -65,27 +65,7 @@
             </div>
         </div>
         
-        <!-- QR Code Section -->
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Your QR Code</h5>
-            </div>
-            <div class="card-body text-center">
-                {% if user.qr_code %}
-                    <img src="{{ user.qr_code.url }}" alt="QR Code" class="img-fluid qr-code-img">
-                    <p class="mt-3 text-muted small">Use this QR code for quick identification within the GSEZ.</p>
-                {% else %}
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i> QR code not generated yet.
-                    </div>
-                {% endif %}
-                <div class="mt-3">
-                    <a href="{% url 'user_profile_card' %}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-id-card me-2"></i>View ID Card
-                    </a>
-                </div>
-            </div>
-        </div>
+        <!-- QR Code section removed as per requirements -->
     </div>
     
     <div class="col-md-4">

@@ -7,6 +7,7 @@ from django.core.files import File
 from PIL import Image
 import json
 from datetime import datetime
+import os
 
 # Function to generate GSEZ ID in the format ZIS + YY + MM + 6-digit sequence number
 def generate_gsezid():
@@ -32,6 +33,21 @@ def generate_gsezid():
     # Format the GSEZ ID as ZISyyMM######
     # e.g., ZIS2506000001 for June 2025, sequence 1
     return f'ZIS{current_year:02d}{current_month:02d}{new_sequence:06d}'
+
+# Function to determine upload path for profile photos using GSEZ ID
+def profile_photo_path(instance, filename):
+    # Get the file extension
+    ext = filename.split('.')[-1]
+    
+    # If the user has a GSEZ ID, use it for the filename
+    if instance.gsezid:
+        filename = f"{instance.gsezid}.{ext}"
+    # Otherwise use the username
+    else:
+        filename = f"{instance.username}.{ext}"
+    
+    # Return the complete path
+    return os.path.join('profile_photos', filename)
 
 class Company(models.Model):
     company_name = models.CharField(max_length=200, unique=True)
@@ -65,7 +81,7 @@ class User(AbstractUser):
     gsez_card_issue_date = models.DateField(blank=True, null=True)
     gsez_card_expiry_date = models.DateField(blank=True, null=True)
     gsezid = models.CharField(max_length=50, unique=True, blank=True, null=True)
-    profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    profile_photo = models.ImageField(upload_to=profile_photo_path, blank=True, null=True)
     
     # Contact Information - Using TextField with JSON serialization instead of JSONField
     emergency_contact_numbers = models.TextField(blank=True, null=True)
@@ -98,25 +114,7 @@ class User(AbstractUser):
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='user')
     is_required_profile_detail = models.BooleanField(default=True)
-    
-    def save(self, *args, **kwargs):
-        # Generate QR code if not exists
-        if not self.qr_code and self.id:
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
-            )
-            qr.add_data(f'user_id:{self.id}')
-            qr.make(fit=True)
-            
-            img = qr.make_image(fill_color="black", back_color="white")
-            buffer = BytesIO()
-            img.save(buffer, format='PNG')
-            self.qr_code.save(f'qr_{self.username}.png', File(buffer), save=False)
-            
-        super().save(*args, **kwargs)
+    is_printed = models.BooleanField(default=False)
     
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.username})"

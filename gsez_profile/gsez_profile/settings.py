@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',  # Our main app
     'crispy_forms',  # For better form rendering
+    'crispy_bootstrap4',  # Bootstrap 4 template pack for crispy forms
 ]
 
 MIDDLEWARE = [
@@ -76,11 +77,17 @@ WSGI_APPLICATION = 'gsez_profile.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# Using SQLite for development
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'mssql',
+        'NAME': 'global_profile',
+        'USER': 'sa',
+        'PASSWORD': 'indian@1234',
+        'HOST': 'DESKTOP-95SH5G5\SQLEXPRESS2019',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+        },
     }
 }
 

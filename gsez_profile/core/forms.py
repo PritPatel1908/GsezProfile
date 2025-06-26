@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Authenti
 from .models import User, Document, Company, generate_gsezid
 from django.core.exceptions import ValidationError
 import json
+from django.contrib.auth import authenticate
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
@@ -10,6 +11,43 @@ class CustomAuthenticationForm(AuthenticationForm):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your GSEZ ID'})
     )
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
+
+    def clean(self):
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if username and password:
+            # First try to find a user with this GSEZID
+            try:
+                user_obj = User.objects.get(gsezid=username)
+                # Use the actual username for authentication
+                self.user_cache = authenticate(self.request, username=user_obj.username, password=password)
+                
+                if self.user_cache is None:
+                    # Authentication failed with correct GSEZ ID but wrong password
+                    raise forms.ValidationError(
+                        "Invalid password for this GSEZ ID.",
+                        code='invalid_login',
+                    )
+                else:
+                    self.confirm_login_allowed(self.user_cache)
+            except User.DoesNotExist:
+                # Check if this is the admin account with username='admin'
+                if username.upper() == 'ADMIN':
+                    self.user_cache = authenticate(self.request, username='admin', password=password)
+                    if self.user_cache is None:
+                        raise forms.ValidationError(
+                            "Invalid password for admin account.",
+                            code='invalid_login',
+                        )
+                else:
+                    # No user found with this GSEZ ID
+                    raise forms.ValidationError(
+                        f"No user found with GSEZ ID '{username}'.",
+                        code='invalid_login',
+                    )
+
+        return self.cleaned_data
 
 class SimpleUserRegistrationForm(UserCreationForm):
     # Remove username from the visible fields
@@ -50,18 +88,18 @@ class SimpleUserRegistrationForm(UserCreationForm):
         first_name = cleaned_data.get('first_name')
         last_name = cleaned_data.get('last_name')
         
-        if first_name and last_name:
-            # Generate username from first_name and last_name
-            base_username = f"{first_name.lower()}_{last_name.lower()}"
-            username = base_username
-            counter = 1
+        # Since SimpleRegistrationForm doesn't have a gsezid field,
+        # we'll generate a GSEZ ID and use it as the username
+        gsez_id = generate_gsezid()
+        username = gsez_id
+        counter = 1
+        
+        # Check if username already exists, if so, append a number
+        while User.objects.filter(username=username).exists():
+            username = f"{gsez_id}_{counter}"
+            counter += 1
             
-            # Check if username already exists, if so, append a number
-            while User.objects.filter(username=username).exists():
-                username = f"{base_username}_{counter}"
-                counter += 1
-                
-            cleaned_data['username'] = username
+        cleaned_data['username'] = username
         
         return cleaned_data
         
@@ -109,20 +147,21 @@ class UserRegistrationForm(UserCreationForm):
         self.fields['gsezid'].required = False
         self.fields['current_address'].required = False
         
+        # Make GSEZ ID field readonly
+        self.fields['gsezid'].widget.attrs.update({'readonly': 'readonly'})
+        
     def clean(self):
         cleaned_data = super().clean()
-        first_name = cleaned_data.get('first_name')
-        last_name = cleaned_data.get('last_name')
+        gsezid = cleaned_data.get('gsezid')
         
-        if first_name and last_name:
-            # Generate username from first_name and last_name
-            base_username = f"{first_name.lower()}_{last_name.lower()}"
-            username = base_username
+        # Use GSEZ ID as username
+        if gsezid:
+            username = gsezid
             counter = 1
             
             # Check if username already exists, if so, append a number
             while User.objects.filter(username=username).exists():
-                username = f"{base_username}_{counter}"
+                username = f"{gsezid}_{counter}"
                 counter += 1
                 
             cleaned_data['username'] = username
@@ -174,14 +213,26 @@ class UserProfileForm(forms.ModelForm):
     institution = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     year_of_passing = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
 
+    def __init__(self, *args, **kwargs):
+        super(UserProfileForm, self).__init__(*args, **kwargs)
+        # Exclude GSEZ ID from form fields to prevent updating
+        if 'gsezid' in self.fields:
+            self.fields['gsezid'].widget.attrs.update({'readonly': 'readonly', 'disabled': 'disabled'})
+        
+        # Make username field readonly but not disabled so it can be submitted
+        if 'username' in self.fields:
+            self.fields['username'].widget.attrs.update({'readonly': 'readonly'})
+
     class Meta:
         model = User
-        fields = ('first_name', 'middle_name', 'last_name', 'email', 'nationality', 
+        fields = ('first_name', 'middle_name', 'last_name', 'email', 'username', 'nationality', 
                  'date_of_birth', 'gsez_card_issue_date', 'gsez_card_expiry_date', 
                  'profile_photo', 'current_address', 'is_permanent', 'permanent_address',
                  'current_employer', 'current_employer_join_date', 'current_employer_emp_code',
                  'current_employer_designation', 'current_employer_department', 'current_employer_company',
                  'current_employer_remarks', 'current_employer_rating')
+        # Explicitly exclude gsezid field
+        exclude = ('gsezid',)
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'middle_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -206,6 +257,27 @@ class UserProfileForm(forms.ModelForm):
     
     def save(self, commit=True):
         instance = super(UserProfileForm, self).save(commit=False)
+        
+        # Get original GSEZID from the instance before form changes
+        if self.instance and self.instance.pk:
+            original_instance = User.objects.get(pk=self.instance.pk)
+            # Always preserve the original GSEZ ID
+            instance.gsezid = original_instance.gsezid
+            
+            gsezid = instance.gsezid
+            
+            # Use only GSEZID for username
+            if gsezid:
+                username = gsezid
+                
+                # Check if generated username already exists for another user
+                counter = 1
+                base_username = username
+                while User.objects.filter(username=username).exclude(pk=instance.pk).exists():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
+                
+                instance.username = username
         
         # Handle emergency contacts
         if self.cleaned_data.get('emergency_contact_name') and self.cleaned_data.get('emergency_contact_number'):
@@ -281,7 +353,7 @@ class CompanyForm(forms.ModelForm):
 class UserManagementForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ('status', 'is_verified', 'user_type')
+        fields = ('status', 'is_verified', 'user_type', 'is_printed')
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control'}),
             'user_type': forms.Select(attrs={'class': 'form-control'}),
@@ -303,7 +375,7 @@ class AdminUserEditForm(forms.ModelForm):
             'current_employer_designation', 'current_employer_department', 
             'current_employer_company', 'current_employer_remarks', 'current_employer_rating',
             # Status and Verification
-            'status', 'is_verified', 'user_type'
+            'status', 'is_verified', 'user_type', 'is_printed'
         ]
         widgets = {
             # Basic Information
@@ -362,9 +434,33 @@ class AdminUserEditForm(forms.ModelForm):
         
         # Always make GSEZ ID field readonly in edit mode
         self.fields['gsezid'].widget.attrs.update({'readonly': 'readonly', 'disabled': 'disabled'})
+        
+        # Make username field readonly but not disabled so it can be submitted with form
+        self.fields['username'].widget.attrs.update({'readonly': 'readonly'})
     
     def save(self, commit=True):
         instance = super(AdminUserEditForm, self).save(commit=False)
+        
+        # Get original GSEZID from the instance before form changes
+        if self.instance and self.instance.pk:
+            original_instance = User.objects.get(pk=self.instance.pk)
+            # Always preserve the original GSEZ ID
+            instance.gsezid = original_instance.gsezid
+
+            gsezid = instance.gsezid
+            
+            # Use only GSEZID for username
+            if gsezid:
+                username = gsezid
+                
+                # Check if generated username already exists for another user
+                counter = 1
+                base_username = username
+                while User.objects.filter(username=username).exclude(pk=instance.pk).exists():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
+                
+                instance.username = username
         
         # Handle emergency contacts
         if self.cleaned_data.get('emergency_contact_name') and self.cleaned_data.get('emergency_contact_number'):
@@ -436,7 +532,7 @@ class AdminUserCreationForm(UserCreationForm):
             'current_employer_designation', 'current_employer_department', 
             'current_employer_company', 'current_employer_remarks', 'current_employer_rating',
             # Status and Verification
-            'status', 'is_verified', 'user_type', 'password1', 'password2'
+            'status', 'is_verified', 'user_type', 'is_printed', 'password1', 'password2'
         ]
         widgets = {
             # Basic Information
@@ -509,6 +605,9 @@ class AdminUserCreationForm(UserCreationForm):
         if not user.gsezid:
             user.gsezid = generate_gsezid()
             
+        # Set username to GSEZ ID
+        user.username = user.gsezid
+            
         # Convert date fields to proper format for existing/basic record
         if user.date_of_birth and hasattr(user.date_of_birth, 'strftime'):
             user.date_of_birth = user.date_of_birth
@@ -577,5 +676,5 @@ class AdminUserCreationForm(UserCreationForm):
             
         if commit:
             user.save()
-            
+
         return user

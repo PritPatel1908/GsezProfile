@@ -79,9 +79,11 @@
                         stopScanBtn.classList.add('d-none');
                         scanning = false;
                         
-                        // Extract user ID from QR code and redirect
-                        const userId = decodedText.split('user/')[1];
-                        if (userId) {
+                        // Handle QR code data
+                        if (decodedText.includes('IDCARD/')) {
+                            // New format: Extract GSEZ ID from URL (http://207.180.234.113/IDCARD/gsezid)
+                            const gsezid = decodedText.split('IDCARD/')[1];
+                            
                             // Create a form and submit
                             const form = document.createElement('form');
                             form.method = 'POST';
@@ -93,17 +95,44 @@
                             csrfInput.name = 'csrfmiddlewaretoken';
                             csrfInput.value = csrfToken;
                             
-                            const userIdInput = document.createElement('input');
-                            userIdInput.type = 'hidden';
-                            userIdInput.name = 'user_id';
-                            userIdInput.value = userId;
+                            const gsezIdInput = document.createElement('input');
+                            gsezIdInput.type = 'hidden';
+                            gsezIdInput.name = 'gsezid';
+                            gsezIdInput.value = gsezid;
                             
                             form.appendChild(csrfInput);
-                            form.appendChild(userIdInput);
+                            form.appendChild(gsezIdInput);
                             document.body.appendChild(form);
                             form.submit();
+                        } else if (decodedText.includes('user_id:')) {
+                            // Legacy format: Extract user ID
+                            const userId = decodedText.split('user_id:')[1];
+                            if (userId) {
+                                // Create a form and submit
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.style.display = 'none';
+                                
+                                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                                const csrfInput = document.createElement('input');
+                                csrfInput.type = 'hidden';
+                                csrfInput.name = 'csrfmiddlewaretoken';
+                                csrfInput.value = csrfToken;
+                                
+                                const userIdInput = document.createElement('input');
+                                userIdInput.type = 'hidden';
+                                userIdInput.name = 'user_id';
+                                userIdInput.value = userId;
+                                
+                                form.appendChild(csrfInput);
+                                form.appendChild(userIdInput);
+                                document.body.appendChild(form);
+                                form.submit();
+                            } else {
+                                alert('Invalid QR code. Please try again.');
+                            }
                         } else {
-                            alert('Invalid QR code. Please try again.');
+                            alert('Invalid QR code format. Please try again.');
                         }
                     },
                     (errorMessage) => {

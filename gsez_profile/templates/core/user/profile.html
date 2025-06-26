@@ -53,13 +53,6 @@
                             <div class="col-6">{{ user.date_of_birth|date:"M d, Y"|default:"Not specified" }}</div>
                         </div>
                     </div>
-
-                    {% if user.qr_code %}
-                        <div class="mt-4 pt-4 border-top">
-                            <h6 class="mb-3">GSEZ QR Code</h6>
-                            <img src="{{ user.qr_code.url }}" alt="QR Code" class="img-fluid" style="max-width: 150px;">
-                        </div>
-                    {% endif %}
                 </div>
             </div>
         </div>

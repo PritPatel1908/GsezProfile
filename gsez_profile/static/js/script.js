@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Run setup for dynamic rows
+    setupDynamicRows();
+
+    // Setup camera capture for profile photo
+    setupCameraCapture();
+
+    // Initialize Bootstrap modals
+    initializeModals();
+
+    // Setup delete confirmation for all delete buttons/forms
+    setupDeleteConfirmation();
+
+    // Add event listener for dynamic content changes that might add new modals
+    document.addEventListener('DOMNodeInserted', function (event) {
+        // Check if the inserted node contains any modals
+        if (event.target.querySelector && event.target.querySelector('.modal')) {
+            // Re-initialize modals if new ones are added
+            setTimeout(function () {
+                initializeModals();
+            }, 100); // Small delay to ensure DOM is fully updated
+        }
+
+        // Check if the inserted node contains delete buttons or forms
+        if (event.target.querySelector &&
+            (event.target.querySelector('button[type="submit"].btn-danger') ||
+                event.target.querySelector('form[action*="delete"]'))) {
+            // Re-setup delete confirmation
+            setTimeout(function () {
+                setupDeleteConfirmation();
+            }, 100); // Small delay to ensure DOM is fully updated
+        }
+    });
+
     // Company name suggestions for previous employer
     const previousEmployerNameInput = document.getElementById('id_previous_employer_name');
     if (previousEmployerNameInput) {
@@ -100,177 +133,743 @@ function previewProfileImage(input) {
         const reader = new FileReader();
 
         reader.onload = function (e) {
-            document.getElementById('profile-image-preview').src = e.target.result;
-            document.getElementById('profile-image-preview').style.display = 'block';
+            const previewImg = document.getElementById('previewPhoto');
+            if (previewImg) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+            }
+
+            // Hide current photo display if it exists
+            const currentPhoto = document.getElementById('currentPhoto');
+            if (currentPhoto) {
+                currentPhoto.style.display = 'none';
+            }
         }
 
         reader.readAsDataURL(input.files[0]);
     }
 }
 
+// Camera capture for profile photo
+function setupCameraCapture() {
+    const openCameraBtn = document.getElementById('openCameraBtn');
+
+    const cameraModal = document.getElementById('cameraModal');
+    const cameraFeed = document.getElementById('cameraFeed');
+    const photoCanvas = document.getElementById('photoCanvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const savePhotoBtn = document.getElementById('savePhotoBtn');
+    const profilePhotoInput = document.querySelector('input[type="file"][name="profile_photo"]');
+    const previewPhoto = document.getElementById('previewPhoto');
+
+    // Skip if not on a page with camera functionality
+    if (!openCameraBtn) {
+        return;
+    }
+
+    let stream = null;
+    let capturedImage = null;
+
+    // Initialize Bootstrap modal if Bootstrap is available
+    let modal = null;
+    if (typeof bootstrap !== 'undefined') {
+        modal = new bootstrap.Modal(cameraModal);
+    }
+
+    // Handle file input change for preview
+    if (profilePhotoInput) {
+        profilePhotoInput.addEventListener('change', function () {
+            previewProfileImage(this);
+        });
+    }
+
+    // Open camera modal and start camera
+    openCameraBtn.addEventListener('click', function (e) {
+        e.preventDefault(); // Prevent form submission
+
+        // Reset UI
+        if (captureBtn) captureBtn.style.display = 'block';
+        if (retakeBtn) retakeBtn.style.display = 'none';
+        if (savePhotoBtn) savePhotoBtn.style.display = 'none';
+        if (cameraFeed) cameraFeed.style.display = 'block';
+
+        // Open modal if Bootstrap is available, otherwise just show the camera container
+        if (modal) {
+            modal.show();
+        } else {
+            cameraModal.style.display = 'block';
+        }
+
+        // Add a timeout for camera initialization
+        let cameraTimeout = setTimeout(function () {
+            alert("Camera access timed out. Please check your camera permissions and try again.");
+            if (modal) {
+                modal.hide();
+            } else if (cameraModal) {
+                cameraModal.style.display = 'none';
+            }
+        }, 10000); // 10 seconds timeout
+
+        // Add camera toggle option
+        let useFrontCamera = true;
+
+        // Create toggle button if it doesn't exist
+        if (!document.getElementById('switchCameraBtn')) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.id = 'switchCameraBtn';
+            toggleBtn.className = 'btn btn-sm btn-info mb-2';
+            toggleBtn.innerHTML = '<i class="fas fa-sync"></i> Switch Camera';
+            toggleBtn.style.display = 'none'; // Hide initially
+
+            // Insert before video element
+            if (cameraFeed && cameraFeed.parentNode) {
+                cameraFeed.parentNode.insertBefore(toggleBtn, cameraFeed);
+            }
+
+            // Add click handler
+            toggleBtn.addEventListener('click', function () {
+                useFrontCamera = !useFrontCamera;
+
+                // Stop current stream
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                // Restart camera with new facing mode
+                startCamera();
+            });
+        }
+
+        const switchCameraBtn = document.getElementById('switchCameraBtn');
+
+        // Function to start camera with fallbacks
+        function startCamera() {
+            // Start camera
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                // Initial camera constraints
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: useFrontCamera ? "user" : "environment"
+                    }
+                };
+
+                // Try to access camera with these constraints
+                navigator.mediaDevices.getUserMedia(constraints)
+                    .then(function (mediaStream) {
+                        // Clear the timeout as camera started successfully
+                        clearTimeout(cameraTimeout);
+
+                        stream = mediaStream;
+                        if (cameraFeed) {
+                            cameraFeed.srcObject = mediaStream;
+                            cameraFeed.play()
+                                .then(function () {
+                                    // Show camera switch button once video is playing
+                                    const switchBtn = document.getElementById('switchCameraBtn');
+                                    if (switchBtn) {
+                                        switchBtn.style.display = 'block';
+                                    }
+                                })
+                                .catch(function (err) {
+                                    alert("Error playing video: " + err.message);
+                                });
+                        }
+                    })
+                    .catch(function (err) {
+                        clearTimeout(cameraTimeout);
+
+                        // Provide more specific error messages
+                        let errorMessage = "Could not access camera. ";
+
+                        if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                            errorMessage += "No camera detected on this device.";
+                        } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                            errorMessage += "Camera permissions denied. Please allow camera access in your browser settings.";
+                        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                            errorMessage += "Camera is already in use by another application.";
+                        } else if (err.name === 'OverconstrainedError') {
+                            errorMessage += "Camera constraints cannot be satisfied.";
+                        } else if (err.name === 'TypeError') {
+                            errorMessage += "No video track found.";
+                        } else if (err.name === 'AbortError') {
+                            errorMessage += "Camera initialization timed out. Try refreshing the page or using a different browser.";
+                        } else {
+                            errorMessage += err.message;
+                        }
+
+                        alert(errorMessage);
+
+                        // Try simplified constraints if the initial attempt failed
+                        if (err.name === 'AbortError' || err.name === 'OverconstrainedError') {
+                            setTimeout(() => {
+                                console.log("Trying simplified camera constraints...");
+                                // Try with just basic video (no specific settings)
+                                navigator.mediaDevices.getUserMedia({
+                                    video: true
+                                })
+                                    .then(function (mediaStream) {
+                                        stream = mediaStream;
+                                        if (cameraFeed) {
+                                            cameraFeed.srcObject = mediaStream;
+                                            cameraFeed.play()
+                                                .then(function () {
+                                                    const switchBtn = document.getElementById('switchCameraBtn');
+                                                    if (switchBtn) {
+                                                        switchBtn.style.display = 'none'; // Hide switch button in fallback mode
+                                                    }
+                                                })
+                                                .catch(function (err) {
+                                                    alert("Error playing video in fallback mode: " + err.message);
+                                                });
+                                        }
+                                    })
+                                    .catch(function (err) {
+                                        alert("Camera access failed even with simplified settings. Please check your device permissions.");
+                                    });
+                            }, 1000); // Wait 1 second before trying fallback
+                        }
+                    });
+            } else {
+                alert("Sorry, your browser doesn't support camera access. Please try using Chrome, Edge, or Firefox.");
+            }
+        }
+
+        // Start camera on open
+        startCamera();
+    });
+
+    // Capture photo button
+    if (captureBtn) {
+        captureBtn.addEventListener('click', function () {
+            if (!cameraFeed || !photoCanvas) {
+                return;
+            }
+
+            try {
+                // Set canvas dimensions to match video feed
+                photoCanvas.width = cameraFeed.videoWidth;
+                photoCanvas.height = cameraFeed.videoHeight;
+                // Draw current video frame to canvas
+                const context = photoCanvas.getContext('2d');
+                context.drawImage(cameraFeed, 0, 0, photoCanvas.width, photoCanvas.height);
+
+                // Get image data as base64 string
+                capturedImage = photoCanvas.toDataURL('image/jpeg');
+
+                // Hide video and show buttons for retake/save
+                cameraFeed.style.display = 'none';
+                captureBtn.style.display = 'none';
+                retakeBtn.style.display = 'block';
+                savePhotoBtn.style.display = 'block';
+
+                // Show captured image
+                photoCanvas.style.display = 'block';
+            } catch (err) {
+                alert("Failed to capture image: " + err.message);
+            }
+        });
+    }
+
+    // Retake photo button
+    if (retakeBtn) {
+        retakeBtn.addEventListener('click', function () {
+            // Reset UI for capturing
+            cameraFeed.style.display = 'block';
+            photoCanvas.style.display = 'none';
+            captureBtn.style.display = 'block';
+            retakeBtn.style.display = 'none';
+            savePhotoBtn.style.display = 'none';
+            capturedImage = null;
+        });
+    }
+
+    // Save captured photo
+    if (savePhotoBtn) {
+        savePhotoBtn.addEventListener('click', function () {
+            if (!capturedImage) {
+                return;
+            }
+
+            try {
+                // Convert base64 to blob
+                const base64 = capturedImage.split(',')[1];
+                const mime = capturedImage.split(',')[0].match(/:(.*?);/)[1];
+                const binaryStr = atob(base64);
+                const len = binaryStr.length;
+                const arr = new Uint8Array(len);
+
+                for (let i = 0; i < len; i++) {
+                    arr[i] = binaryStr.charCodeAt(i);
+                }
+
+                const blob = new Blob([arr], { type: mime });
+
+                // Create a File object from the Blob
+                const filename = `camera_capture_${new Date().getTime()}.jpg`;
+                const file = new File([blob], filename, { type: mime });
+
+                // Check browser support for DataTransfer
+                if (typeof DataTransfer === 'undefined') {
+
+                    // Show preview directly
+                    if (previewPhoto) {
+                        previewPhoto.src = capturedImage;
+                        previewPhoto.style.display = 'block';
+
+                        // Hide current photo if exists
+                        const currentPhoto = document.getElementById('currentPhoto');
+                        if (currentPhoto) {
+                            currentPhoto.style.display = 'none';
+                        }
+                    }
+                } else {
+                    // Use DataTransfer to create a FileLike object
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+
+                    // Set the file to the input element
+                    if (profilePhotoInput) {
+                        try {
+                            profilePhotoInput.files = dataTransfer.files;
+
+                            // Trigger change event to update preview
+                            const event = new Event('change', { bubbles: true });
+                            profilePhotoInput.dispatchEvent(event);
+                        } catch (err) {
+
+                            // Fall back to direct preview
+                            if (previewPhoto) {
+                                previewPhoto.src = capturedImage;
+                                previewPhoto.style.display = 'block';
+
+                                // Hide current photo if exists
+                                const currentPhoto = document.getElementById('currentPhoto');
+                                if (currentPhoto) {
+                                    currentPhoto.style.display = 'none';
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Create a hidden input to store base64 image data as fallback
+                let hiddenInput = document.getElementById('camera_capture_data');
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = 'camera_capture_data';
+                    hiddenInput.name = 'camera_capture_data';
+                    document.getElementById('profileForm').appendChild(hiddenInput);
+                }
+                hiddenInput.value = capturedImage;
+
+                // Close modal
+                if (modal) {
+                    modal.hide();
+                } else if (cameraModal) {
+                    cameraModal.style.display = 'none';
+                }
+
+                // Stop camera stream
+                stopCameraStream();
+            } catch (err) {
+                alert("Failed to save captured image: " + err.message);
+            }
+        });
+    }
+
+    // Close modal handler - stop camera stream
+    if (cameraModal) {
+        // Add event listener for Bootstrap modal
+        cameraModal.addEventListener('hidden.bs.modal', function () {
+            stopCameraStream();
+        });
+
+        // Also add handler for close button for non-Bootstrap scenarios
+        const closeBtn = cameraModal.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                stopCameraStream();
+                if (!modal) {
+                    cameraModal.style.display = 'none';
+                }
+            });
+        }
+    }
+
+    // Helper function to stop camera stream
+    function stopCameraStream() {
+        if (stream) {
+            stream.getTracks().forEach(track => {
+                track.stop();
+            });
+            stream = null;
+        }
+    }
+}
+
 // User form dynamic rows
 function setupDynamicRows() {
+    // Clear any existing event listeners to prevent duplicate handlers
+    const clearExistingListeners = (buttonId) => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            return newButton;
+        }
+        return null;
+    };
+
     // Add Emergency Contact
-    const addEmergencyContactBtn = document.getElementById('addEmergencyContact');
-    if (addEmergencyContactBtn) {
-        addEmergencyContactBtn.addEventListener('click', function () {
-            const template = document.getElementById('emergencyContactTemplate');
-            const container = document.getElementById('emergencyContactsContainer');
-            const clone = template.content.cloneNode(true);
+    // const addEmergencyContactBtn = clearExistingListeners('addEmergencyContact');
+    // if (addEmergencyContactBtn) {
+    //     addEmergencyContactBtn.addEventListener('click', function () {
+    //         const template = document.getElementById('emergencyContactTemplate');
+    //         const container = document.getElementById('emergencyContactsContainer');
 
-            // Add event listener to remove button
-            const removeBtn = clone.querySelector('.remove-row');
-            removeBtn.addEventListener('click', function () {
-                this.closest('.emergency-contact-row').remove();
-            });
+    //         // Check if the template exists
+    //         if (!template || !container) return;
 
-            // Add some styling to differentiate the new row
-            const newRow = clone.querySelector('.emergency-contact-row');
-            newRow.classList.add('border-top', 'pt-3', 'mt-3');
+    //         const clone = template.content.cloneNode(true);
 
-            container.appendChild(clone);
-        });
-    }
+    //         // Add event listener to remove button
+    //         const removeBtn = clone.querySelector('.remove-row');
+    //         if (removeBtn) {
+    //             removeBtn.addEventListener('click', function () {
+    //                 this.closest('.emergency-contact-row').remove();
+    //             });
+    //         }
+
+    //         container.appendChild(clone);
+    //     });
+    // }
 
     // Add Family Member
-    const addFamilyMemberBtn = document.getElementById('addFamilyMember');
-    if (addFamilyMemberBtn) {
-        addFamilyMemberBtn.addEventListener('click', function () {
-            const template = document.getElementById('familyMemberTemplate');
-            const container = document.getElementById('familyMembersContainer');
-            const clone = template.content.cloneNode(true);
+    // const addFamilyMemberBtn = clearExistingListeners('addFamilyMember');
+    // if (addFamilyMemberBtn) {
+    //     addFamilyMemberBtn.addEventListener('click', function () {
+    //         const template = document.getElementById('familyMemberTemplate');
+    //         const container = document.getElementById('familyMembersContainer');
 
-            // Add event listener to remove button
-            const removeBtn = clone.querySelector('.remove-row');
-            removeBtn.addEventListener('click', function () {
-                this.closest('.family-member-row').remove();
-            });
+    //         // Check if the template exists
+    //         if (!template || !container) return;
 
-            // Add some styling to differentiate the new row
-            const newRow = clone.querySelector('.family-member-row');
-            newRow.classList.add('border-top', 'pt-3', 'mt-3');
+    //         const clone = template.content.cloneNode(true);
 
-            container.appendChild(clone);
-        });
-    }
+    //         // Add event listener to remove button
+    //         const removeBtn = clone.querySelector('.remove-row');
+    //         if (removeBtn) {
+    //             removeBtn.addEventListener('click', function () {
+    //                 this.closest('.family-member-row').remove();
+    //             });
+    //         }
+
+    //         container.appendChild(clone);
+    //     });
+    // }
 
     // Add Previous Employer
-    const addPreviousEmployerBtn = document.getElementById('addPreviousEmployer');
-    if (addPreviousEmployerBtn) {
-        addPreviousEmployerBtn.addEventListener('click', function () {
-            const template = document.getElementById('previousEmployerTemplate');
-            const container = document.getElementById('previousEmployersContainer');
-            const clone = template.content.cloneNode(true);
+    // const addPreviousEmployerBtn = clearExistingListeners('addPreviousEmployer');
+    // if (addPreviousEmployerBtn) {
+    //     addPreviousEmployerBtn.addEventListener('click', function () {
+    //         const template = document.getElementById('previousEmployerTemplate');
+    //         const container = document.getElementById('previousEmployersContainer');
 
-            // Add event listener to remove button
-            const removeBtn = clone.querySelector('.remove-row');
-            removeBtn.addEventListener('click', function () {
-                this.closest('.previous-employer-row').remove();
-            });
+    //         // Check if the template exists
+    //         if (!template || !container) return;
 
-            // Add some styling to differentiate the new row
-            const newRow = clone.querySelector('.previous-employer-row');
-            newRow.classList.add('border-top', 'pt-3');
+    //         const clone = template.content.cloneNode(true);
 
-            container.appendChild(clone);
-        });
-    }
+    //         // Add event listener to remove button
+    //         const removeBtn = clone.querySelector('.remove-row');
+    //         if (removeBtn) {
+    //             removeBtn.addEventListener('click', function () {
+    //                 this.closest('.previous-employer-row').remove();
+    //             });
+    //         }
+
+    //         container.appendChild(clone);
+    //     });
+    // }
 
     // Add Qualification
-    const addQualificationBtn = document.getElementById('addQualification');
-    if (addQualificationBtn) {
-        addQualificationBtn.addEventListener('click', function () {
-            const template = document.getElementById('qualificationTemplate');
-            const container = document.getElementById('qualificationsContainer');
-            const clone = template.content.cloneNode(true);
+    // const addQualificationBtn = clearExistingListeners('addQualification');
+    // if (addQualificationBtn) {
+    //     addQualificationBtn.addEventListener('click', function () {
+    //         const template = document.getElementById('qualificationTemplate');
+    //         const container = document.getElementById('qualificationsContainer');
 
-            // Add event listener to remove button
-            const removeBtn = clone.querySelector('.remove-row');
-            removeBtn.addEventListener('click', function () {
-                this.closest('.qualification-row').remove();
-            });
+    //         // Check if the template exists
+    //         if (!template || !container) return;
 
-            // Add some styling to differentiate the new row
-            const newRow = clone.querySelector('.qualification-row');
-            newRow.classList.add('border-top', 'pt-3', 'mt-3');
+    //         const clone = template.content.cloneNode(true);
 
-            container.appendChild(clone);
-        });
-    }
+    //         // Add event listener to remove button
+    //         const removeBtn = clone.querySelector('.remove-row');
+    //         if (removeBtn) {
+    //             removeBtn.addEventListener('click', function () {
+    //                 this.closest('.qualification-row').remove();
+    //             });
+    //         }
+
+    //         container.appendChild(clone);
+    //     });
+    // }
 
     // Setup existing remove buttons for emergency contacts
-    document.querySelectorAll('.remove-contact').forEach(button => {
-        button.addEventListener('click', function () {
-            const index = this.getAttribute('data-index');
-            const row = this.closest('tr');
-            row.remove();
+    // document.querySelectorAll('.remove-contact').forEach(button => {
+    //     button.addEventListener('click', function () {
+    //         const index = this.getAttribute('data-index');
+    //         const row = this.closest('tr');
+    //         row.remove();
 
-            // Add hidden input to track deleted item
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'deleted_contacts[]';
-            input.value = index;
-            document.getElementById('deletedContactsContainer').appendChild(input);
-        });
-    });
+    //         // Add hidden input to track deleted item
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = 'deleted_contacts[]';
+    //         input.value = index;
+
+    //         const container = document.getElementById('deletedContactsContainer');
+    //         if (container) {
+    //             container.appendChild(input);
+    //         }
+    //     });
+    // });
 
     // Setup existing remove buttons for family members
-    document.querySelectorAll('.remove-family-member').forEach(button => {
-        button.addEventListener('click', function () {
-            const index = this.getAttribute('data-index');
-            const row = this.closest('tr');
-            row.remove();
+    // document.querySelectorAll('.remove-family-member').forEach(button => {
+    //     button.addEventListener('click', function () {
+    //         const index = this.getAttribute('data-index');
+    //         const row = this.closest('tr');
+    //         row.remove();
 
-            // Add hidden input to track deleted item
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'deleted_family_members[]';
-            input.value = index;
-            document.getElementById('deletedFamilyMembersContainer').appendChild(input);
-        });
-    });
+    //         // Add hidden input to track deleted item
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = 'deleted_family_members[]';
+    //         input.value = index;
+
+    //         const container = document.getElementById('deletedFamilyMembersContainer');
+    //         if (container) {
+    //             container.appendChild(input);
+    //         }
+    //     });
+    // });
 
     // Setup existing remove buttons for previous employers
-    document.querySelectorAll('.remove-employer').forEach(button => {
-        button.addEventListener('click', function () {
-            const index = this.getAttribute('data-index');
-            const row = this.closest('tr');
-            row.remove();
+    // document.querySelectorAll('.remove-employer').forEach(button => {
+    //     button.addEventListener('click', function () {
+    //         const index = this.getAttribute('data-index');
+    //         const row = this.closest('tr');
+    //         row.remove();
 
-            // Add hidden input to track deleted item
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'deleted_employers[]';
-            input.value = index;
-            document.getElementById('deletedEmployersContainer').appendChild(input);
-        });
-    });
+    //         // Add hidden input to track deleted item
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = 'deleted_employers[]';
+    //         input.value = index;
+
+    //         const container = document.getElementById('deletedEmployersContainer');
+    //         if (container) {
+    //             container.appendChild(input);
+    //         }
+    //     });
+    // });
 
     // Setup existing remove buttons for qualifications
-    document.querySelectorAll('.remove-qualification').forEach(button => {
-        button.addEventListener('click', function () {
-            const index = this.getAttribute('data-index');
-            const row = this.closest('tr');
-            row.remove();
+    // document.querySelectorAll('.remove-qualification').forEach(button => {
+    //     button.addEventListener('click', function () {
+    //         const index = this.getAttribute('data-index');
+    //         const row = this.closest('tr');
+    //         row.remove();
 
-            // Add hidden input to track deleted item
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'deleted_qualifications[]';
-            input.value = index;
-            document.getElementById('deletedQualificationsContainer').appendChild(input);
-        });
-    });
+    //         // Add hidden input to track deleted item
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = 'deleted_qualifications[]';
+    //         input.value = index;
 
-    // Setup existing remove-row buttons
-    document.querySelectorAll('.remove-row').forEach(button => {
-        button.addEventListener('click', function () {
-            this.closest('[class$="-row"]').remove();
-        });
+    //         const container = document.getElementById('deletedQualificationsContainer');
+    //         if (container) {
+    //             container.appendChild(input);
+    //         }
+    //     });
+    // });
+}
+
+// Function to initialize Bootstrap modals
+function initializeModals() {
+    // Make sure Bootstrap is available
+    if (typeof bootstrap === 'undefined') {
+        console.warn('Bootstrap is not loaded, modal initialization skipped');
+        return;
+    }
+
+    // Initialize all modals on the page without creating duplicate instances
+    document.querySelectorAll('.modal').forEach(function (modalElement) {
+        // Skip if already processed to avoid duplicate handlers
+        if (modalElement.hasAttribute('data-initialized')) {
+            return;
+        }
+
+        // Only initialize if not already initialized by Bootstrap
+        if (!bootstrap.Modal.getInstance(modalElement)) {
+            // Create modal with options to prevent unwanted behavior
+            const modalInstance = new bootstrap.Modal(modalElement, {
+                backdrop: true,     // Allow clicking outside to close
+                keyboard: true      // Allow ESC key to close
+            });
+
+            // Mark as initialized
+            modalElement.setAttribute('data-initialized', 'true');
+
+            // Store the instance on the element for future reference
+            modalElement._modalInstance = modalInstance;
+
+            // Find all triggers for this modal
+            const modalId = modalElement.id;
+            if (modalId) {
+                // Handle both data-bs-target and data-bs-toggle attributes
+                const triggers = document.querySelectorAll(
+                    `[data-bs-target="#${modalId}"], [data-bs-toggle="modal"][href="#${modalId}"]`
+                );
+
+                triggers.forEach(function (triggerElement) {
+                    // Remove existing click listeners to prevent duplicates
+                    const newTrigger = triggerElement.cloneNode(true);
+                    triggerElement.parentNode.replaceChild(newTrigger, triggerElement);
+
+                    // Add our custom handler
+                    newTrigger.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        modalInstance.show();
+                    });
+                });
+            }
+        }
     });
 }
 
-// Call the function when DOM is loaded
-document.addEventListener('DOMContentLoaded', function () {
-    setupDynamicRows();
-}); 
+// Function to setup delete confirmation for all delete buttons/forms
+function setupDeleteConfirmation() {
+    // Handle forms with delete action in URL
+    document.querySelectorAll('form[action*="delete"]').forEach(form => {
+        // Skip if already processed
+        if (form.hasAttribute('data-delete-confirmation')) {
+            return;
+        }
+
+        form.setAttribute('data-delete-confirmation', 'true');
+
+        // Store the original submit event
+        const originalSubmit = form.onsubmit;
+
+        // Override the submit event
+        form.onsubmit = function (e) {
+            e.preventDefault();
+
+            // Show confirmation dialog
+            if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
+                // If confirmed, remove our handler and submit
+                form.onsubmit = originalSubmit;
+                form.submit();
+            }
+        };
+    });
+
+    // Handle forms with hidden input[name="action"][value="delete"]
+    document.querySelectorAll('form').forEach(form => {
+        // Skip if already processed or already handled by previous selector
+        if (form.hasAttribute('data-delete-confirmation') || form.getAttribute('action')?.includes('delete')) {
+            return;
+        }
+
+        // Check if the form has a hidden input with name="action" and value="delete"
+        const deleteInput = form.querySelector('input[name="action"][value="delete"]');
+        if (deleteInput) {
+            form.setAttribute('data-delete-confirmation', 'true');
+
+            // Store the original submit event
+            const originalSubmit = form.onsubmit;
+
+            // Override the submit event
+            form.onsubmit = function (e) {
+                e.preventDefault();
+
+                // Show confirmation dialog
+                if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
+                    // If confirmed, remove our handler and submit
+                    form.onsubmit = originalSubmit;
+                    form.submit();
+                }
+            };
+        }
+    });
+
+    // Handle delete buttons that are not in forms with delete action
+    document.querySelectorAll('button.btn-danger:not([data-delete-confirmation]), a.btn-danger:not([data-delete-confirmation])').forEach(button => {
+        // Skip if already processed
+        if (button.hasAttribute('data-delete-confirmation')) {
+            return;
+        }
+
+        button.setAttribute('data-delete-confirmation', 'true');
+
+        // Store the original click event
+        const originalClick = button.onclick;
+
+        // Override the click event
+        button.onclick = function (e) {
+            e.preventDefault();
+
+            // Show confirmation dialog
+            if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
+                // If confirmed, execute the original click handler
+                if (originalClick) {
+                    originalClick.call(this, e);
+                }
+
+                // If it's a link, navigate to the href
+                if (button.tagName === 'A' && button.href) {
+                    window.location.href = button.href;
+                }
+
+                // If it's in a form, submit the form
+                const parentForm = button.closest('form');
+                if (parentForm) {
+                    parentForm.submit();
+                }
+            }
+        };
+    });
+
+    // Handle forms that target delete URLs
+    document.querySelectorAll('form[method="get"][action*="delete"]').forEach(form => {
+        // Skip if already processed
+        if (form.hasAttribute('data-delete-confirmation')) {
+            return;
+        }
+
+        form.setAttribute('data-delete-confirmation', 'true');
+
+        // Store the original submit event
+        const originalSubmit = form.onsubmit;
+
+        // Override the submit event
+        form.onsubmit = function (e) {
+            e.preventDefault();
+
+            // Show confirmation dialog
+            if (confirm('क्या आप वाकई इस रिकॉर्ड को हटाना चाहते हैं?')) {
+                // If confirmed, remove our handler and submit
+                form.onsubmit = originalSubmit;
+                form.submit();
+            }
+        };
+    });
+} 

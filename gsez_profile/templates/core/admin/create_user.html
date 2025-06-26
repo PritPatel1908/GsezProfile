@@ -73,7 +73,17 @@
                 </div>
             </div>
             
-            <div class="row">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="allowLoginToggle" checked>
+                        <label class="form-check-label" for="allowLoginToggle">Allow Login</label>
+                        <input type="hidden" name="allow_login" id="allowLoginValue" value="true">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row" id="passwordFieldsContainer">
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.password1.id_for_label }}" class="form-label">Password <span class="text-danger">*</span></label>
                     {{ form.password1 }}
@@ -115,10 +125,81 @@
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="{{ form.profile_photo.id_for_label }}" class="form-label">Profile Photo</label>
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-sm btn-secondary" id="openCameraBtn">
+                            <i class="fas fa-camera"></i> Capture Photo
+                        </button>
+                    </div>
                     {{ form.profile_photo }}
                     {% if form.profile_photo.errors %}
                         <div class="text-danger">{{ form.profile_photo.errors }}</div>
                     {% endif %}
+                    <div class="mt-2">
+                        <img id="previewPhoto" src="#" alt="Preview" class="img-thumbnail mt-2" style="max-height: 100px; display: none;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Camera Modal -->
+            <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="cameraModalLabel"><i class="fas fa-camera"></i> Capture Profile Photo</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-0">
+                            <!-- Camera Controls -->
+                            <div class="bg-light p-3 mb-0 text-center">
+                                <button id="switchCameraBtn" class="btn btn-info me-2">
+                                    <i class="fas fa-sync"></i> Switch Camera
+                                </button>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-circle me-1"></i> Camera Active
+                                </span>
+                            </div>
+                            
+                            <div class="position-relative">
+                                <!-- Video Container with Centered Content and Overlay -->
+                                <div class="video-container p-0 text-center bg-dark">
+                                    <video id="cameraFeed" style="width: 100%; max-height: 500px; object-fit: cover;" autoplay></video>
+                                    <!-- Overlay Guide -->
+                                    <div id="faceOverlay" class="position-absolute top-50 start-50 translate-middle" style="border: 2px dashed rgba(255,255,255,0.5); border-radius: 50%; width: 200px; height: 200px; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                                        <div class="text-white bg-dark bg-opacity-50 px-2 py-1 rounded">
+                                            <small>Position face here</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Canvas for Captured Photo -->
+                                <canvas id="photoCanvas" style="display: none; width: 100%; max-height: 500px; object-fit: cover;" class="bg-dark"></canvas>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="p-3 bg-light d-flex justify-content-center">
+                                <button type="button" class="btn btn-lg btn-primary px-4" id="captureBtn">
+                                    <i class="fas fa-camera"></i> Take Photo
+                                </button>
+                                <button type="button" class="btn btn-lg btn-secondary px-4 mx-2" id="retakeBtn" style="display: none;">
+                                    <i class="fas fa-redo"></i> Retake
+                                </button>
+                                <button type="button" class="btn btn-lg btn-success px-4" id="savePhotoBtn" style="display: none;">
+                                    <i class="fas fa-check"></i> Use Photo
+                                </button>
+                            </div>
+                            
+                            <!-- Instructions -->
+                            <div class="p-3 border-top">
+                                <h6 class="text-muted"><i class="fas fa-info-circle"></i> Tips for a good photo:</h6>
+                                <ul class="text-muted small mb-0">
+                                    <li>Ensure your face is well-lit and clearly visible</li>
+                                    <li>Position your face inside the circle guide</li>
+                                    <li>Look directly at the camera</li>
+                                    <li>If you have trouble, try switching cameras or adjusting lighting</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -181,6 +262,23 @@
             </button>
         </div>
         <div class="card-body">
+            <!-- Table for displaying emergency contacts, initially empty -->
+            <div class="table-responsive mb-3" id="emergencyContactsTableContainer" style="display: none;">
+                <table class="table table-bordered" id="emergencyContactsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact Number</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Contacts will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted mb-3" id="noContactsMessage">No emergency contacts added yet.</p>
+            
             <!-- Default emergency contact form fields -->
             <div class="emergency-contact-row mb-3">
                 <div class="row">
@@ -534,6 +632,13 @@
                     Verified Account
                 </label>
             </div>
+            
+            <div class="mb-3 form-check">
+                {{ form.is_printed }}
+                <label class="form-check-label" for="{{ form.is_printed.id_for_label }}">
+                    ID Card Printed
+                </label>
+            </div>
         </div>
     </div>
     
@@ -552,25 +657,14 @@
         const usernameField = document.getElementById('{{ form.username.id_for_label }}');
         
         function updateUsername() {
-            const firstName = firstNameField.value.trim().toLowerCase();
-            const lastName = lastNameField.value.trim().toLowerCase();
             const gsezId = gsezIdField.value.trim();
             
-            let username = '';
-            if (lastName) {
-                username = lastName;
-                if (firstName) {
-                    username = firstName + '_' + username;
-                }
-            } else if (firstName) {
-                username = firstName;
-            }
-            
+            // Only use GSEZ ID as username
             if (gsezId) {
-                username = (username ? username + '_' : '') + gsezId;
+                usernameField.value = gsezId;
+            } else {
+                usernameField.value = '';
             }
-            
-            usernameField.value = username.replace(/\s+/g, '_');
         }
         
         firstNameField.addEventListener('input', updateUsername);
@@ -579,6 +673,154 @@
         
         // Initial update in case fields are pre-filled
         updateUsername();
+        
+        // Handle Allow Login Toggle
+        const allowLoginToggle = document.getElementById('allowLoginToggle');
+        const allowLoginValue = document.getElementById('allowLoginValue');
+        const passwordFieldsContainer = document.getElementById('passwordFieldsContainer');
+        const password1Field = document.getElementById('{{ form.password1.id_for_label }}');
+        const password2Field = document.getElementById('{{ form.password2.id_for_label }}');
+        
+        function togglePasswordFields() {
+            if (allowLoginToggle.checked) {
+                // Show password fields
+                passwordFieldsContainer.style.display = 'flex';
+                password1Field.setAttribute('required', 'required');
+                password2Field.setAttribute('required', 'required');
+                allowLoginValue.value = 'true';
+            } else {
+                // Hide password fields
+                passwordFieldsContainer.style.display = 'none';
+                password1Field.removeAttribute('required');
+                password2Field.removeAttribute('required');
+                // Clear password fields
+                password1Field.value = '';
+                password2Field.value = '';
+                allowLoginValue.value = 'false';
+            }
+        }
+        
+        // Set up event listener for the toggle switch
+        allowLoginToggle.addEventListener('change', togglePasswordFields);
+        
+        // Initial toggle state update
+        togglePasswordFields();
+        
+        // Emergency Contacts
+        const addEmergencyContactBtn = document.getElementById('addEmergencyContact');
+        const emergencyContactTemplate = document.getElementById('emergencyContactTemplate');
+        const emergencyContactsContainer = document.getElementById('emergencyContactsContainer');
+        
+        if (addEmergencyContactBtn && emergencyContactTemplate && emergencyContactsContainer) {
+            addEmergencyContactBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent form submission
+                const clone = document.importNode(emergencyContactTemplate.content, true);
+                
+                // Add event listener to the remove button in the cloned content
+                const removeBtn = clone.querySelector('.remove-row');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function(e) {
+                        e.preventDefault(); // Prevent form submission
+                        this.closest('.emergency-contact-row').remove();
+                    });
+                }
+                
+                emergencyContactsContainer.appendChild(clone);
+            });
+        }
+        
+        // Family Members
+        const addFamilyMemberBtn = document.getElementById('addFamilyMember');
+        const familyMemberTemplate = document.getElementById('familyMemberTemplate');
+        const familyMembersContainer = document.getElementById('familyMembersContainer');
+        
+        if (addFamilyMemberBtn && familyMemberTemplate && familyMembersContainer) {
+            addFamilyMemberBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent form submission
+                const clone = document.importNode(familyMemberTemplate.content, true);
+                
+                // Add event listener to the remove button in the cloned content
+                const removeBtn = clone.querySelector('.remove-row');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function(e) {
+                        e.preventDefault(); // Prevent form submission
+                        this.closest('.family-member-row').remove();
+                    });
+                }
+                
+                familyMembersContainer.appendChild(clone);
+            });
+        }
+        
+        // Previous Employers
+        const addPreviousEmployerBtn = document.getElementById('addPreviousEmployer');
+        const previousEmployerTemplate = document.getElementById('previousEmployerTemplate');
+        const previousEmployersContainer = document.getElementById('previousEmployersContainer');
+        
+        if (addPreviousEmployerBtn && previousEmployerTemplate && previousEmployersContainer) {
+            addPreviousEmployerBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent form submission
+                const clone = document.importNode(previousEmployerTemplate.content, true);
+                
+                // Add event listener to the remove button in the cloned content
+                const removeBtn = clone.querySelector('.remove-row');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function(e) {
+                        e.preventDefault(); // Prevent form submission
+                        this.closest('.previous-employer-row').remove();
+                    });
+                }
+                
+                previousEmployersContainer.appendChild(clone);
+            });
+        }
+        
+        // Qualifications
+        const addQualificationBtn = document.getElementById('addQualification');
+        const qualificationTemplate = document.getElementById('qualificationTemplate');
+        const qualificationsContainer = document.getElementById('qualificationsContainer');
+        
+        if (addQualificationBtn && qualificationTemplate && qualificationsContainer) {
+            addQualificationBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent form submission
+                const clone = document.importNode(qualificationTemplate.content, true);
+                
+                // Add event listener to the remove button in the cloned content
+                const removeBtn = clone.querySelector('.remove-row');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function(e) {
+                        e.preventDefault(); // Prevent form submission
+                        this.closest('.qualification-row').remove();
+                    });
+                }
+                
+                qualificationsContainer.appendChild(clone);
+            });
+        }
+        
+        // Form validation before submit
+        const createUserForm = document.getElementById('createUserForm');
+        if (createUserForm) {
+            createUserForm.addEventListener('submit', function(e) {
+                // Additional validation can be added here if needed
+                // For example, checking if required fields are filled
+                
+                // Make sure at least one emergency contact is provided if any fields are filled
+                const emergencyContactName = document.querySelector('[name="{{ form.emergency_contact_name.name }}"]');
+                const emergencyContactNumber = document.querySelector('[name="{{ form.emergency_contact_number.name }}"]');
+                
+                if ((emergencyContactName && emergencyContactName.value) && 
+                    (!emergencyContactNumber || !emergencyContactNumber.value)) {
+                    alert('Please provide both name and number for emergency contact');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Similar validations can be added for other multi-value fields
+                
+                return true;
+            });
+        }
     });
 </script>
 

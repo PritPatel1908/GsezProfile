@@ -6,6 +6,7 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
     path('simple-register/', views.simple_register_view, name='simple_register'),
     path('login/', views.login_view, name='login'),
+    path('login-new/', views.login_view, name='login_new'),
     path('logout/', views.logout_view, name='logout'),
     
     # User URLs
@@ -20,14 +21,19 @@ urlpatterns = [
     # Admin URLs
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin/users/', views.admin_manage_users, name='admin_manage_users'),
-    path('admin/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+    path('admin/users/detail/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
     path('admin/users/edit/<int:user_id>/', views.admin_edit_user, name='admin_edit_user'),
     path('admin/users/create/', views.admin_create_user, name='admin_create_user'),
     path('admin/companies/', views.admin_manage_companies, name='admin_manage_companies'),
     path('admin/hr/', views.admin_manage_hr, name='admin_manage_hr'),
+    path('admin/hr/edit/<int:user_id>/', views.admin_edit_hr, name='admin_edit_hr'),
     path('admin/security/', views.admin_manage_security, name='admin_manage_security'),
+    path('admin/security/edit/<int:user_id>/', views.admin_edit_security, name='admin_edit_security'),
     path('admin/export/users/', views.admin_export_users, name='admin_export_users'),
+    path('admin/export/users/template/', views.admin_export_users_template, name='admin_export_users_template'),
     path('admin/export/companies/', views.admin_export_companies, name='admin_export_companies'),
+    path('admin/import/companies/', views.admin_import_companies, name='admin_import_companies'),
+    path('admin/users/import/', views.admin_import_users, name='admin_import_users'),
     
     # Document management URLs
     path('admin/documents/', views.admin_manage_documents, name='admin_manage_documents'),
@@ -35,6 +41,9 @@ urlpatterns = [
     path('admin/documents/create/<int:user_id>/', views.admin_create_document, name='admin_create_document_for_user'),
     path('admin/documents/edit/<int:document_id>/', views.admin_edit_document, name='admin_edit_document'),
     path('admin/documents/delete/<int:document_id>/', views.admin_delete_document, name='admin_delete_document'),
+    path('admin/documents/import/', views.admin_import_documents, name='admin_import_documents'),
+    path('admin/documents/export/', views.admin_export_documents, name='admin_export_documents'),
+    path('admin/documents/export/template/', views.admin_export_documents_template, name='admin_export_documents_template'),
     
     # HR URLs
     path('hr/dashboard/', views.hr_dashboard, name='hr_dashboard'),
@@ -51,6 +60,9 @@ urlpatterns = [
     
     # API URLs
     path('api/company-suggestions/', views.company_suggestions, name='company_suggestions'),
+    
+    # ID Card URL (accessible via QR code)
+    path('IDCARD/<str:gsezid>/', views.idcard_view, name='idcard'),
     
     # Default URL (home page)
     path('', views.home_view, name='home'),

@@ -103,8 +103,11 @@
                             </ul>
                         </li>
                     {% else %}
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link" href="{% url 'login' %}">Login</a>
+                        </li> -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login_new' %}">Login</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'register' %}">Register</a>
@@ -141,6 +144,17 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
     <script src="{% static 'js/script.js' %}"></script>
+    
+    <!-- Initialize modals once on page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize modals on page load
+            if (typeof initializeModals === 'function') {
+                initializeModals();
+            }
+        });
+    </script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html> 
