@@ -108,6 +108,13 @@ class SimpleUserRegistrationForm(UserCreationForm):
         # Set the username from the cleaned_data
         user.username = self.cleaned_data.get('username')
         
+        # Generate a GSEZ ID if not already set (should be set in clean method)
+        if not user.gsezid:
+            user.gsezid = generate_gsezid()
+        
+        # Always set the profile_full_link with the correct format
+        user.profile_full_link = f"http://207.108.234.113:83/{user.gsezid}.jpg"
+        
         if commit:
             user.save()
             
@@ -187,6 +194,9 @@ class UserRegistrationForm(UserCreationForm):
         if not user.gsezid:
             user.gsezid = generate_gsezid()
         
+        # Always set the profile_full_link with the correct format
+        user.profile_full_link = f"http://207.108.234.113:83/{user.gsezid}.jpg"
+        
         if commit:
             user.save()
         return user
@@ -231,8 +241,8 @@ class UserProfileForm(forms.ModelForm):
                  'current_employer', 'current_employer_join_date', 'current_employer_emp_code',
                  'current_employer_designation', 'current_employer_department', 'current_employer_company',
                  'current_employer_remarks', 'current_employer_rating')
-        # Explicitly exclude gsezid field
-        exclude = ('gsezid',)
+        # Explicitly exclude gsezid field and profile_full_link
+        exclude = ('gsezid', 'profile_full_link')
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'middle_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -278,6 +288,9 @@ class UserProfileForm(forms.ModelForm):
                     counter += 1
                 
                 instance.username = username
+                
+                # Always set the profile_full_link with the correct format
+                instance.profile_full_link = f"http://207.108.234.113:83/{gsezid}.jpg"
         
         # Handle emergency contacts
         if self.cleaned_data.get('emergency_contact_name') and self.cleaned_data.get('emergency_contact_number'):
@@ -367,7 +380,7 @@ class AdminUserEditForm(forms.ModelForm):
             'username', 'email', 'first_name', 'middle_name', 'last_name',
             # Personal Information
             'nationality', 'date_of_birth', 'gsezid', 
-            'gsez_card_issue_date', 'gsez_card_expiry_date', 'profile_photo',
+            'gsez_card_issue_date', 'gsez_card_expiry_date', 'profile_photo', 'profile_full_link',
             # Address Information
             'current_address', 'is_permanent', 'permanent_address',
             # Current Employment
@@ -391,6 +404,7 @@ class AdminUserEditForm(forms.ModelForm):
             'gsez_card_issue_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gsez_card_expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
+            'profile_full_link': forms.TextInput(attrs={'class': 'form-control'}),
             # Address Information
             'current_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'permanent_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -461,6 +475,9 @@ class AdminUserEditForm(forms.ModelForm):
                     counter += 1
                 
                 instance.username = username
+                
+                # Always set the profile_full_link with the correct format
+                instance.profile_full_link = f"http://207.108.234.113:83/{gsezid}.jpg"
         
         # Handle emergency contacts
         if self.cleaned_data.get('emergency_contact_name') and self.cleaned_data.get('emergency_contact_number'):
@@ -524,7 +541,7 @@ class AdminUserCreationForm(UserCreationForm):
             'username', 'email', 'first_name', 'middle_name', 'last_name',
             # Personal Information
             'nationality', 'date_of_birth', 'gsezid', 
-            'gsez_card_issue_date', 'gsez_card_expiry_date', 'profile_photo',
+            'gsez_card_issue_date', 'gsez_card_expiry_date', 'profile_photo', 'profile_full_link',
             # Address Information
             'current_address', 'is_permanent', 'permanent_address',
             # Current Employment
@@ -548,6 +565,7 @@ class AdminUserCreationForm(UserCreationForm):
             'gsez_card_issue_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gsez_card_expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
+            'profile_full_link': forms.TextInput(attrs={'class': 'form-control'}),
             # Address Information
             'current_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'permanent_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -607,6 +625,9 @@ class AdminUserCreationForm(UserCreationForm):
             
         # Set username to GSEZ ID
         user.username = user.gsezid
+        
+        # Always set the profile_full_link with the correct format
+        user.profile_full_link = f"http://207.108.234.113:83/{user.gsezid}.jpg"
             
         # Convert date fields to proper format for existing/basic record
         if user.date_of_birth and hasattr(user.date_of_birth, 'strftime'):

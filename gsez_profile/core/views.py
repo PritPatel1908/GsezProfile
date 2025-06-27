@@ -257,8 +257,15 @@ def user_profile_edit(request):
                 
                 # Assign the file to the user's profile_photo field
                 request.user.profile_photo.save(filename, data, save=False)
+                
+                # Set the profile_full_link field with .jpg extension
+                request.user.profile_full_link = f"http://207.108.234.113:83/{request.user.gsezid}.jpg"
+                
             except Exception as e:
                 print(f"Error processing camera capture data: {e}")
+        elif 'profile_photo' in request.FILES:
+            # If a profile photo was uploaded via the form, set the profile_full_link with .jpg extension
+            request.user.profile_full_link = f"http://207.108.234.113:83/{request.user.gsezid}.jpg"
         
         # Check for deleted items
         deleted_contacts = request.POST.getlist('deleted_contacts[]', [])
@@ -631,8 +638,15 @@ def admin_edit_user(request, user_id):
                 
                 # Assign the file to the user's profile_photo field
                 user_obj.profile_photo.save(filename, data, save=False)
+                
+                # Set the profile_full_link field with .jpg extension
+                user_obj.profile_full_link = f"http://207.108.234.113:83/{user_obj.gsezid}.jpg"
+                
             except Exception as e:
                 print(f"Error processing camera capture data: {e}")
+        elif 'profile_photo' in request.FILES:
+            # If a new profile photo was uploaded via the form, update the profile_full_link with .jpg extension
+            user_obj.profile_full_link = f"http://207.108.234.113:83/{user_obj.gsezid}.jpg"
         
         # Check for deleted items
         deleted_contacts = request.POST.getlist('deleted_contacts[]', [])
@@ -822,13 +836,20 @@ def admin_create_user(request):
                     from django.core.files.base import ContentFile
                     
                     # Create a ContentFile from the decoded base64 data
-                    data = ContentFile(base64.b64decode(imgstr), name=f'camera_capture_{user.id}.{ext}')
+                    filename = f"{user.gsezid}.{ext}"
+                    data = ContentFile(base64.b64decode(imgstr), name=filename)
                     
                     # Assign the file to the user's profile_photo field
-                    user.profile_photo.save(f'camera_capture_{user.id}.{ext}', data, save=False)
-                    user.save()
+                    user.profile_photo.save(filename, data, save=False)
+                    
+                    # Always set the profile_full_link with .jpg extension
+                    user.profile_full_link = f"http://207.108.234.113:83/{user.gsezid}.jpg"
+                    
                 except Exception as e:
                     print(f"Error processing camera capture data: {e}")
+            elif user.profile_photo:
+                # If a profile photo was uploaded via the form, set the profile_full_link with .jpg extension
+                user.profile_full_link = f"http://207.108.234.113:83/{user.gsezid}.jpg"
             
             # Process additional emergency contacts
             extra_names = request.POST.getlist('emergency_contact_name_extra[]')
@@ -1140,45 +1161,49 @@ def admin_export_users(request):
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Users')
     
-    # Sheet header - all fields from User model
+    # Sheet header, first row
     row_num = 0
+    
     columns = [
-        'username', 'first_name', 'middle_name', 'last_name', 'email', 
-        'user_type', 'status', 'is_verified', 'is_required_profile_detail', 'is_printed',
-        'nationality', 'date_of_birth', 'gsez_card_issue_date', 'gsez_card_expiry_date', 'gsezid',
-        'current_address', 'is_permanent', 'permanent_address', 
-        'current_employer', 'current_employer_join_date', 'current_employer_emp_code', 
-        'current_employer_designation', 'current_employer_department', 'current_employer_company',
-        'current_employer_remarks', 'current_employer_rating',
-        'emergency_contact_numbers', 'family_members', 'previous_employers', 'qualifications'
+        'ID', 'Username', 'Email', 'First Name', 'Middle Name', 'Last Name',
+        'User Type', 'Status', 'Is Verified', 'Is Profile Complete', 'Is Printed',
+        'Nationality', 'Date of Birth', 'GSEZ Card Issue Date', 'GSEZ Card Expiry Date', 'GSEZ ID',
+        'Profile Full Link', 'Current Address', 'Is Permanent', 'Permanent Address',
+        'Current Employer', 'Join Date', 'Employee Code', 'Designation', 'Department', 'Company',
+        'Remarks', 'Rating', 'Emergency Contacts', 'Family Members', 'Previous Employers', 'Qualifications'
     ]
     
+    # Write header row
     for col_num, column_title in enumerate(columns):
         ws.write(row_num, col_num, column_title)
     
-    # Sheet body - all users with all fields
-    users = User.objects.filter(user_type='user').select_related('current_employer_company')
+    # Get all users
+    users = User.objects.filter(user_type='user')
+    
+    # Write data rows
     for user in users:
         row_num += 1
         row = [
-            user.username, 
-            user.first_name,
-            user.middle_name,
-            user.last_name,
+            user.id,
+            user.username,
             user.email,
+            user.first_name,
+            user.middle_name if user.middle_name else '',
+            user.last_name,
             user.user_type,
             user.status,
             '1' if user.is_verified else '0',
-            '1' if user.is_required_profile_detail else '0',
+            '1' if not user.is_required_profile_detail else '0',
             '1' if user.is_printed else '0',
-            user.nationality,
+            user.nationality if user.nationality else '',
             str(user.date_of_birth) if user.date_of_birth else '',
             str(user.gsez_card_issue_date) if user.gsez_card_issue_date else '',
             str(user.gsez_card_expiry_date) if user.gsez_card_expiry_date else '',
-            user.gsezid,
-            user.current_address,
+            user.gsezid if user.gsezid else '',
+            user.profile_full_link if user.profile_full_link else '',
+            user.current_address if user.current_address else '',
             '1' if user.is_permanent else '0',
-            user.permanent_address,
+            user.permanent_address if user.permanent_address else '',
             user.current_employer,
             str(user.current_employer_join_date) if user.current_employer_join_date else '',
             user.current_employer_emp_code,
@@ -1212,7 +1237,7 @@ def admin_export_users_template(request):
         'username', 'password', 'first_name', 'middle_name', 'last_name', 'email', 
         'user_type', 'status', 'is_verified', 'is_required_profile_detail', 'is_printed',
         'nationality', 'date_of_birth', 'gsez_card_issue_date', 'gsez_card_expiry_date', 'gsezid',
-        'current_address', 'is_permanent', 'permanent_address', 
+        'profile_full_link', 'current_address', 'is_permanent', 'permanent_address', 
         'current_employer', 'current_employer_join_date', 'current_employer_emp_code', 
         'current_employer_designation', 'current_employer_department', 'current_employer_company',
         'current_employer_remarks', 'current_employer_rating',
@@ -1231,7 +1256,7 @@ def admin_export_users_template(request):
         'Use: 1/0', 'Use: 1/0', 'Use: 1/0',
         'Optional', 'Use: YYYY-MM-DD or DD/MM/YYYY', 'Use: YYYY-MM-DD or DD/MM/YYYY', 
         'Use: YYYY-MM-DD or DD/MM/YYYY', 'Optional (auto-generated if blank)',
-        'Optional', 'Use: 1/0', 'Optional',
+        'Optional (e.g. http://207.108.234.113:83/GSEZID.jpg)', 'Optional', 'Use: 1/0', 'Optional',
         'Optional', 'Use: YYYY-MM-DD or DD/MM/YYYY', 'Optional', 
         'Optional', 'Optional', 'Must exist in system',
         'Optional', 'Optional (number 1-5)',
@@ -1248,7 +1273,7 @@ def admin_export_users_template(request):
         'john_doe', 'password123', 'John', '', 'Doe', 'john@example.com',
         'user', 'active', '1', '1', '0',
         'Indian', '1990-01-01', '2023-01-01', '2025-01-01', '',
-        '123 Street, City', '0', '456 Street, City',
+        'http://207.108.234.113:83/ZIS2506000001.jpg', '123 Street, City', '0', '456 Street, City',
         'ACME Corp', '2022-01-01', 'EMP123', 
         'Developer', 'IT', 'Company Name',
         'Good employee', '4',
@@ -1265,7 +1290,7 @@ def admin_export_users_template(request):
         'jane_smith', 'pass456', 'Jane', 'M', 'Smith', 'jane@example.com',
         'user', 'active', '0', '1', '0',
         'American', '31/05/1992', '01.02.2023', '01-02-2025', '',
-        '789 Road, Town', '1', '789 Road, Town',
+        'http://207.108.234.113:83/ZIS2506000002.jpg', '789 Road, Town', '1', '789 Road, Town',
         'XYZ Ltd', '01/06/2021', 'XYZ456', 
         'Manager', 'HR', 'XYZ Company',
         'Excellent manager', '5',
@@ -1380,7 +1405,7 @@ def admin_import_users(request):
                         'middle_name', 'nationality', 'gsezid', 'current_address',
                         'permanent_address', 'current_employer', 'current_employer_emp_code',
                         'current_employer_designation', 'current_employer_department',
-                        'current_employer_remarks'
+                        'current_employer_remarks', 'profile_full_link'
                     ]
                     
                     for field in optional_text_fields:
@@ -2252,7 +2277,7 @@ def admin_import_documents(request):
                         'middle_name', 'nationality', 'gsezid', 'current_address',
                         'permanent_address', 'current_employer', 'current_employer_emp_code',
                         'current_employer_designation', 'current_employer_department',
-                        'current_employer_remarks'
+                        'current_employer_remarks', 'profile_full_link'
                     ]
                     
                     for field in optional_text_fields:

@@ -36,15 +36,12 @@ def generate_gsezid():
 
 # Function to determine upload path for profile photos using GSEZ ID
 def profile_photo_path(instance, filename):
-    # Get the file extension
-    ext = filename.split('.')[-1]
-    
     # If the user has a GSEZ ID, use it for the filename
     if instance.gsezid:
-        filename = f"{instance.gsezid}.{ext}"
+        filename = f"{instance.gsezid}.jpg"
     # Otherwise use the username
     else:
-        filename = f"{instance.username}.{ext}"
+        filename = f"{instance.username}.jpg"
     
     # Return the complete path
     return os.path.join('profile_photos', filename)
@@ -82,6 +79,7 @@ class User(AbstractUser):
     gsez_card_expiry_date = models.DateField(blank=True, null=True)
     gsezid = models.CharField(max_length=50, unique=True, blank=True, null=True)
     profile_photo = models.ImageField(upload_to=profile_photo_path, blank=True, null=True)
+    profile_full_link = models.CharField(max_length=255, blank=True, null=True)
     
     # Contact Information - Using TextField with JSON serialization instead of JSONField
     emergency_contact_numbers = models.TextField(blank=True, null=True)

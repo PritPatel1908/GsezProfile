@@ -413,7 +413,6 @@ function setupCameraCapture() {
 
                 // Check browser support for DataTransfer
                 if (typeof DataTransfer === 'undefined') {
-
                     // Show preview directly
                     if (previewPhoto) {
                         previewPhoto.src = capturedImage;
@@ -439,7 +438,6 @@ function setupCameraCapture() {
                             const event = new Event('change', { bubbles: true });
                             profilePhotoInput.dispatchEvent(event);
                         } catch (err) {
-
                             // Fall back to direct preview
                             if (previewPhoto) {
                                 previewPhoto.src = capturedImage;
@@ -455,16 +453,23 @@ function setupCameraCapture() {
                     }
                 }
 
-                // Create a hidden input to store base64 image data as fallback
-                let hiddenInput = document.getElementById('camera_capture_data');
-                if (!hiddenInput) {
-                    hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.id = 'camera_capture_data';
-                    hiddenInput.name = 'camera_capture_data';
-                    document.getElementById('profileForm').appendChild(hiddenInput);
+                // Update the hidden input with the captured image data
+                try {
+                    console.log('Updating hidden input for camera capture data');
+                    let hiddenInput = document.getElementById('camera_capture_data');
+
+                    if (hiddenInput) {
+                        console.log('Found existing hidden input, updating value');
+                        hiddenInput.value = capturedImage;
+                        console.log('Hidden input value set successfully');
+                    } else {
+                        console.error('Hidden input element not found');
+                        alert('There was an issue saving the captured image. Please try again or use file upload instead.');
+                    }
+                } catch (err) {
+                    console.error('Error updating hidden input:', err);
+                    alert('There was an issue saving the captured image. Please try again or use file upload instead.');
                 }
-                hiddenInput.value = capturedImage;
 
                 // Close modal
                 if (modal) {
@@ -761,14 +766,14 @@ function setupDeleteConfirmation() {
     const deleteModal = document.getElementById('deleteConfirmModal');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     const deleteMessage = document.getElementById('deleteConfirmMessage');
-    
+
     // Skip if modal elements don't exist
     if (!deleteModal || !confirmBtn) {
         console.warn('Delete confirmation modal not found, using browser confirm instead');
         setupFallbackDeleteConfirmation();
         return;
     }
-    
+
     // Create Bootstrap modal instance if Bootstrap is available
     let modal = null;
     if (typeof bootstrap !== 'undefined') {
@@ -778,11 +783,11 @@ function setupDeleteConfirmation() {
         setupFallbackDeleteConfirmation();
         return;
     }
-    
+
     // Variable to store the callback function when delete is confirmed
     let confirmCallback = null;
     let currentForm = null;
-    
+
     // Handle forms with delete action in URL
     document.querySelectorAll('form[action*="delete"]').forEach(form => {
         // Skip if already processed or has custom delete handler
@@ -793,20 +798,20 @@ function setupDeleteConfirmation() {
         form.setAttribute('data-delete-confirmation', 'true');
 
         // Override the submit event
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             console.log('Delete form submit intercepted');
             e.preventDefault();
-            
+
             // Store reference to the current form
             currentForm = form;
-            
+
             // Set the confirmation callback
             confirmCallback = () => {
                 console.log('Submitting form after confirmation');
                 // Submit the form directly without using preventDefault
                 form.submit();
             };
-            
+
             // Show the modal
             modal.show();
         });
@@ -815,7 +820,7 @@ function setupDeleteConfirmation() {
     // Handle forms with hidden input[name="action"][value="delete"]
     document.querySelectorAll('form').forEach(form => {
         // Skip if already processed or already handled by previous selector or has custom delete handler
-        if (form.hasAttribute('data-delete-confirmation') || 
+        if (form.hasAttribute('data-delete-confirmation') ||
             form.getAttribute('action')?.includes('delete') ||
             form.classList.contains('delete-user-form')) {
             return;
@@ -828,20 +833,20 @@ function setupDeleteConfirmation() {
             form.setAttribute('data-delete-confirmation', 'true');
 
             // Override the submit event
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 console.log('Delete form submit intercepted');
                 e.preventDefault();
-                
+
                 // Store reference to the current form
                 currentForm = form;
-                
+
                 // Set the confirmation callback
                 confirmCallback = () => {
                     console.log('Submitting form after confirmation');
                     // Submit the form directly
                     form.submit();
                 };
-                
+
                 // Show the modal
                 modal.show();
             });
@@ -859,12 +864,12 @@ function setupDeleteConfirmation() {
 
         // Store the original click event
         const originalClick = button.onclick;
-        
+
         // Override the click event
-        button.addEventListener('click', function(e) {
+        button.addEventListener('click', function (e) {
             console.log('Delete button clicked');
             e.preventDefault();
-            
+
             // Set the confirmation callback
             confirmCallback = () => {
                 // Execute the original click handler if it exists
@@ -883,7 +888,7 @@ function setupDeleteConfirmation() {
                     parentForm.submit();
                 }
             };
-            
+
             // Show the modal
             modal.show();
         });
@@ -899,33 +904,33 @@ function setupDeleteConfirmation() {
         form.setAttribute('data-delete-confirmation', 'true');
 
         // Override the submit event
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             // Store reference to the current form
             currentForm = form;
-            
+
             // Set the confirmation callback
             confirmCallback = () => {
                 form.submit();
             };
-            
+
             // Show the modal
             modal.show();
         });
     });
-    
+
     // Add click event to the confirm button in the modal
-    confirmBtn.addEventListener('click', function() {
+    confirmBtn.addEventListener('click', function () {
         console.log('Confirm button clicked');
-        
+
         // Hide the modal
         modal.hide();
-        
+
         // Execute the callback if it exists
         if (confirmCallback && typeof confirmCallback === 'function') {
             console.log('Executing confirmation callback with delay');
-            
+
             // Use a small delay to allow modal to close
             setTimeout(() => {
                 console.log('Executing callback now');
@@ -938,9 +943,9 @@ function setupDeleteConfirmation() {
             console.log('No confirmation callback found');
         }
     });
-    
+
     // Reset callback when modal is dismissed
-    deleteModal.addEventListener('hidden.bs.modal', function() {
+    deleteModal.addEventListener('hidden.bs.modal', function () {
         confirmCallback = null;
         currentForm = null;
     });
@@ -1049,14 +1054,14 @@ function setupFallbackDeleteConfirmation() {
         form.setAttribute('data-delete-confirmation', 'true');
 
         // Override the submit event
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             // Set the confirmation callback
             confirmCallback = () => {
                 form.submit();
             };
-            
+
             // Show the modal
             modal.show();
         });
