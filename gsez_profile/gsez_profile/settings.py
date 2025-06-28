@@ -82,9 +82,9 @@ DATABASES = {
         'ENGINE': 'mssql',
         'NAME': 'global_profile',
         'USER': 'sa',
-        'PASSWORD': 'prit1908',
-        'HOST': 'DESKTOP-5K4DC3Q\SQLEXPRESS2022',
-        'PORT': '1432',
+        'PASSWORD': 'indian@1234',
+        'HOST': 'DESKTOP-95SH5G5\SQLEXPRESS2019',
+        'PORT': '1433',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
