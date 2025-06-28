@@ -41,6 +41,14 @@
                     {% endif %}
                 </p>
                 
+                {% if user_obj.gsezid %}
+                <div class="mt-3">
+                    <a href="http://207.180.234.113/IDCARD/{{ user_obj.gsezid }}" target="_blank" class="btn btn-success">
+                        <i class="fas fa-id-card me-2"></i>View ID Card
+                    </a>
+                </div>
+                {% endif %}
+                
                 {# QR code display and regeneration functionality has been removed #}
             </div>
         </div>

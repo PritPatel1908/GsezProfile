@@ -224,24 +224,6 @@
                         </div>
                     </div>
                     
-                    <!-- HR Stats -->
-                    <div class="col text-center border-end">
-                        <div class="text-info">
-                            <i class="fas fa-user-tie fa-2x mb-2"></i>
-                            <h6 class="text-uppercase fw-bold mb-1">HR STAFF</h6>
-                            <h4 class="fw-bold">{{ hr_count }}</h4>
-                        </div>
-                    </div>
-                    
-                    <!-- Security Stats -->
-                    <div class="col text-center border-end">
-                        <div class="text-warning">
-                            <i class="fas fa-shield-alt fa-2x mb-2"></i>
-                            <h6 class="text-uppercase fw-bold mb-1">SECURITY STAFF</h6>
-                            <h4 class="fw-bold">{{ security_count }}</h4>
-                        </div>
-                    </div>
-                    
                     <!-- Printed ID Cards Stats -->
                     <div class="col text-center">
                         <div class="text-danger">
@@ -342,35 +324,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card border-0 shadow access-card h-100">
-                            <div class="card-body text-center">
-                                <div class="rounded-circle bg-light p-4 d-inline-flex mb-3">
-                                    <i class="fas fa-users-cog fa-3x text-primary"></i>
-                                </div>
-                                <h5 class="card-title font-weight-bold">Manage HR Staff</h5>
-                                <p class="card-text">Add and manage HR personnel for various companies.</p>
-                                <a href="{% url 'admin_manage_hr' %}" class="btn btn-primary btn-sm mt-2">
-                                    <i class="fas fa-arrow-right"></i> Go to HR Management
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card border-0 shadow access-card h-100">
-                            <div class="card-body text-center">
-                                <div class="rounded-circle bg-light p-4 d-inline-flex mb-3">
-                                    <i class="fas fa-shield-alt fa-3x text-warning"></i>
-                                </div>
-                                <h5 class="card-title font-weight-bold">Manage Security</h5>
-                                <p class="card-text">Add and manage security personnel for the GSEZ.</p>
-                                <a href="{% url 'admin_manage_security' %}" class="btn btn-warning btn-sm mt-2">
-                                    <i class="fas fa-arrow-right"></i> Go to Security Management
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="col-lg-4 col-md-6 mb-4 mx-auto">
                         <div class="card border-0 shadow access-card h-100">
                             <div class="card-body text-center">
                                 <div class="rounded-circle bg-light p-4 d-inline-flex mb-3">

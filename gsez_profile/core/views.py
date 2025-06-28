@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from functools import wraps
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse_lazy
@@ -45,6 +46,20 @@ def is_security(user):
 
 def is_regular_user(user):
     return user.user_type == 'user'
+
+# Helper function to check if HR and Security features are disabled
+def are_hr_security_disabled():
+    return True  # Set to True to disable HR and Security features
+
+# Decorator to check if HR and Security features are disabled
+def check_hr_security_access(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if are_hr_security_disabled():
+            messages.warning(request, 'This section is currently disabled.')
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 # Authentication views
 def register_view(request):
@@ -111,10 +126,13 @@ def login_view(request):
                 redirect_url = 'user_dashboard'
                 if user.user_type == 'admin':
                     redirect_url = 'admin_dashboard'
-                elif user.user_type == 'hr':
+                elif user.user_type == 'hr' and not are_hr_security_disabled():
                     redirect_url = 'hr_dashboard'
-                elif user.user_type == 'security':
+                elif user.user_type == 'security' and not are_hr_security_disabled():
                     redirect_url = 'security_dashboard'
+                elif (user.user_type == 'hr' or user.user_type == 'security') and are_hr_security_disabled():
+                    messages.warning(request, "HR and Security sections are currently disabled. Please contact the administrator.")
+                    redirect_url = 'home'
                 
                 # If it's an AJAX request and not a fallback, return JSON response
                 if is_ajax and not use_traditional_submit:
@@ -257,8 +275,15 @@ def user_profile_edit(request):
                 
                 # Assign the file to the user's profile_photo field
                 request.user.profile_photo.save(filename, data, save=False)
+                
+                # Set the profile_full_link field with .jpg extension
+                request.user.profile_full_link = f"http://207.108.234.113:83/{request.user.gsezid}.jpg"
+                
             except Exception as e:
                 print(f"Error processing camera capture data: {e}")
+        elif 'profile_photo' in request.FILES:
+            # If a profile photo was uploaded via the form, set the profile_full_link with .jpg extension
+            request.user.profile_full_link = f"http://207.108.234.113:83/{request.user.gsezid}.jpg"
         
         # Check for deleted items
         deleted_contacts = request.POST.getlist('deleted_contacts[]', [])
@@ -631,8 +656,15 @@ def admin_edit_user(request, user_id):
                 
                 # Assign the file to the user's profile_photo field
                 user_obj.profile_photo.save(filename, data, save=False)
+                
+                # Set the profile_full_link field with .jpg extension
+                user_obj.profile_full_link = f"http://207.108.234.113:83/{user_obj.gsezid}.jpg"
+                
             except Exception as e:
                 print(f"Error processing camera capture data: {e}")
+        elif 'profile_photo' in request.FILES:
+            # If a new profile photo was uploaded via the form, update the profile_full_link with .jpg extension
+            user_obj.profile_full_link = f"http://207.108.234.113:83/{user_obj.gsezid}.jpg"
         
         # Check for deleted items
         deleted_contacts = request.POST.getlist('deleted_contacts[]', [])
@@ -822,13 +854,20 @@ def admin_create_user(request):
                     from django.core.files.base import ContentFile
                     
                     # Create a ContentFile from the decoded base64 data
-                    data = ContentFile(base64.b64decode(imgstr), name=f'camera_capture_{user.id}.{ext}')
+                    filename = f"{user.gsezid}.{ext}"
+                    data = ContentFile(base64.b64decode(imgstr), name=filename)
                     
                     # Assign the file to the user's profile_photo field
-                    user.profile_photo.save(f'camera_capture_{user.id}.{ext}', data, save=False)
-                    user.save()
+                    user.profile_photo.save(filename, data, save=False)
+                    
+                    # Always set the profile_full_link with .jpg extension
+                    user.profile_full_link = f"http://207.108.234.113:83/{user.gsezid}.jpg"
+                    
                 except Exception as e:
                     print(f"Error processing camera capture data: {e}")
+            elif user.profile_photo:
+                # If a profile photo was uploaded via the form, set the profile_full_link with .jpg extension
+                user.profile_full_link = f"http://207.108.234.113:83/{user.gsezid}.jpg"
             
             # Process additional emergency contacts
             extra_names = request.POST.getlist('emergency_contact_name_extra[]')
@@ -999,136 +1038,103 @@ def admin_manage_companies(request):
 @login_required
 @user_passes_test(is_admin)
 def admin_manage_hr(request):
+    if are_hr_security_disabled():
+        messages.warning(request, 'HR management is currently disabled.')
+        return redirect('admin_dashboard')
+    
     # Get items per page parameter for compatibility
-    items_per_page = request.GET.get('per_page', '10')
-    if items_per_page not in ['5', '10', '15']:
-        items_per_page = '10'
+    items_per_page = request.GET.get('items_per_page', 10)
+    try:
+        items_per_page = int(items_per_page)
+    except ValueError:
+        items_per_page = 10
     
-    # Get all HR staff
-    hrs = User.objects.filter(user_type='hr').order_by('id')
-    companies = Company.objects.all()
+    # Get query parameter for search
+    query = request.GET.get('query', '')
     
-    if request.method == 'POST':
-        # Check for delete action first
-        if request.POST.get('action') == 'delete':
-            hr_id = request.POST.get('hr_id')
-            try:
-                hr_user = User.objects.get(id=hr_id)
-                hr_user.delete()
-                messages.success(request, 'HR staff deleted successfully.')
-            except User.DoesNotExist:
-                messages.error(request, 'HR staff not found.')
-            return redirect('admin_manage_hr')
-            
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.user_type = 'hr'
-            
-            # Generate GSEZ ID if not provided, which will be used as username
-            if not user.gsezid:
-                user.gsezid = generate_gsezid()
-            
-            # Set username to gsezid to prevent NOT NULL constraint error
-            user.username = user.gsezid
-            
-            user.save()
-            
-            # Assign company
-            company_id = request.POST.get('company')
-            if company_id:
-                try:
-                    company = Company.objects.get(id=company_id)
-                    user.current_employer_company = company
-                    user.save()
-                except Company.DoesNotExist:
-                    messages.warning(request, f'Company with ID {company_id} not found.')
-                
-            messages.success(request, 'HR created successfully.')
-            return redirect('admin_manage_hr')
-    else:
-        form = UserRegistrationForm()
+    # Get all HR users
+    hr_users = User.objects.filter(user_type='hr')
     
-    # Pagination
-    paginator = Paginator(hrs, int(items_per_page))
-    page = request.GET.get('page', 1)
+    # Apply search if query is provided
+    if query:
+        hr_users = hr_users.filter(
+            Q(gsezid__icontains=query) | 
+            Q(first_name__icontains=query) | 
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(mobile_number__icontains=query)
+        )
+    
+    # Paginate the users
+    paginator = Paginator(hr_users, items_per_page)
+    page = request.GET.get('page')
     
     try:
-        hrs_page = paginator.page(page)
+        hr_list = paginator.page(page)
     except PageNotAnInteger:
-        hrs_page = paginator.page(1)
+        # If page is not an integer, deliver first page.
+        hr_list = paginator.page(1)
     except EmptyPage:
-        hrs_page = paginator.page(paginator.num_pages)
+        # If page is out of range, deliver last page of results.
+        hr_list = paginator.page(paginator.num_pages)
     
     return render(request, 'core/admin/manage_hr.html', {
-        'hrs': hrs_page,
-        'total_items': hrs.count(),
+        'hr_list': hr_list,
         'items_per_page': items_per_page,
-        'companies': companies,
-        'form': form,
-        'page_obj': hrs_page,
-        'paginator': paginator
+        'query': query,
+        # Additional context for pagination links
+        'extra_query_params': f'&items_per_page={items_per_page}&query={query}' if query else f'&items_per_page={items_per_page}'
     })
 
 @login_required
 @user_passes_test(is_admin)
 def admin_manage_security(request):
+    if are_hr_security_disabled():
+        messages.warning(request, 'Security management is currently disabled.')
+        return redirect('admin_dashboard')
+    
     # Get items per page parameter for compatibility
-    items_per_page = request.GET.get('per_page', '10')
-    if items_per_page not in ['5', '10', '15']:
-        items_per_page = '10'
+    items_per_page = request.GET.get('items_per_page', 10)
+    try:
+        items_per_page = int(items_per_page)
+    except ValueError:
+        items_per_page = 10
     
-    # Get all security staff
-    security_staff = User.objects.filter(user_type='security').order_by('id')
+    # Get query parameter for search
+    query = request.GET.get('query', '')
     
-    if request.method == 'POST':
-        # Check for delete action first
-        if request.POST.get('action') == 'delete':
-            security_id = request.POST.get('security_id')
-            try:
-                security_user = User.objects.get(id=security_id)
-                security_user.delete()
-                messages.success(request, 'Security staff deleted successfully.')
-            except User.DoesNotExist:
-                messages.error(request, 'Security staff not found.')
-            return redirect('admin_manage_security')
-        
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.user_type = 'security'
-            
-            # Generate GSEZ ID if not provided, which will be used as username
-            if not user.gsezid:
-                user.gsezid = generate_gsezid()
-            
-            # Set username to gsezid to prevent NOT NULL constraint error
-            user.username = user.gsezid
-            
-            user.save()
-            messages.success(request, 'Security staff created successfully.')
-            return redirect('admin_manage_security')
-    else:
-        form = UserRegistrationForm()
+    # Get all Security users
+    security_users = User.objects.filter(user_type='security')
     
-    # Pagination
-    paginator = Paginator(security_staff, int(items_per_page))
-    page = request.GET.get('page', 1)
+    # Apply search if query is provided
+    if query:
+        security_users = security_users.filter(
+            Q(gsezid__icontains=query) | 
+            Q(first_name__icontains=query) | 
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(mobile_number__icontains=query)
+        )
+    
+    # Paginate the users
+    paginator = Paginator(security_users, items_per_page)
+    page = request.GET.get('page')
     
     try:
-        security_staff_page = paginator.page(page)
+        security_list = paginator.page(page)
     except PageNotAnInteger:
-        security_staff_page = paginator.page(1)
+        # If page is not an integer, deliver first page.
+        security_list = paginator.page(1)
     except EmptyPage:
-        security_staff_page = paginator.page(paginator.num_pages)
+        # If page is out of range, deliver last page of results.
+        security_list = paginator.page(paginator.num_pages)
     
     return render(request, 'core/admin/manage_security.html', {
-        'security_staff': security_staff_page,
-        'total_items': security_staff.count(),
+        'security_list': security_list,
         'items_per_page': items_per_page,
-        'form': form,
-        'page_obj': security_staff_page,
-        'paginator': paginator
+        'query': query,
+        # Additional context for pagination links
+        'extra_query_params': f'&items_per_page={items_per_page}&query={query}' if query else f'&items_per_page={items_per_page}'
     })
 
 @login_required
@@ -1140,45 +1146,49 @@ def admin_export_users(request):
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Users')
     
-    # Sheet header - all fields from User model
+    # Sheet header, first row
     row_num = 0
+    
     columns = [
-        'username', 'first_name', 'middle_name', 'last_name', 'email', 
-        'user_type', 'status', 'is_verified', 'is_required_profile_detail', 'is_printed',
-        'nationality', 'date_of_birth', 'gsez_card_issue_date', 'gsez_card_expiry_date', 'gsezid',
-        'current_address', 'is_permanent', 'permanent_address', 
-        'current_employer', 'current_employer_join_date', 'current_employer_emp_code', 
-        'current_employer_designation', 'current_employer_department', 'current_employer_company',
-        'current_employer_remarks', 'current_employer_rating',
-        'emergency_contact_numbers', 'family_members', 'previous_employers', 'qualifications'
+        'ID', 'Username', 'Email', 'First Name', 'Middle Name', 'Last Name',
+        'User Type', 'Status', 'Is Verified', 'Is Profile Complete', 'Is Printed',
+        'Nationality', 'Date of Birth', 'GSEZ Card Issue Date', 'GSEZ Card Expiry Date', 'GSEZ ID',
+        'Profile Full Link', 'Current Address', 'Is Permanent', 'Permanent Address',
+        'Current Employer', 'Join Date', 'Employee Code', 'Designation', 'Department', 'Company',
+        'Remarks', 'Rating', 'Emergency Contacts', 'Family Members', 'Previous Employers', 'Qualifications'
     ]
     
+    # Write header row
     for col_num, column_title in enumerate(columns):
         ws.write(row_num, col_num, column_title)
     
-    # Sheet body - all users with all fields
-    users = User.objects.filter(user_type='user').select_related('current_employer_company')
+    # Get all users
+    users = User.objects.filter(user_type='user')
+    
+    # Write data rows
     for user in users:
         row_num += 1
         row = [
-            user.username, 
-            user.first_name,
-            user.middle_name,
-            user.last_name,
+            user.id,
+            user.username,
             user.email,
+            user.first_name,
+            user.middle_name if user.middle_name else '',
+            user.last_name,
             user.user_type,
             user.status,
             '1' if user.is_verified else '0',
-            '1' if user.is_required_profile_detail else '0',
+            '1' if not user.is_required_profile_detail else '0',
             '1' if user.is_printed else '0',
-            user.nationality,
+            user.nationality if user.nationality else '',
             str(user.date_of_birth) if user.date_of_birth else '',
             str(user.gsez_card_issue_date) if user.gsez_card_issue_date else '',
             str(user.gsez_card_expiry_date) if user.gsez_card_expiry_date else '',
-            user.gsezid,
-            user.current_address,
+            user.gsezid if user.gsezid else '',
+            user.profile_full_link if user.profile_full_link else '',
+            user.current_address if user.current_address else '',
             '1' if user.is_permanent else '0',
-            user.permanent_address,
+            user.permanent_address if user.permanent_address else '',
             user.current_employer,
             str(user.current_employer_join_date) if user.current_employer_join_date else '',
             user.current_employer_emp_code,
@@ -1212,7 +1222,7 @@ def admin_export_users_template(request):
         'username', 'password', 'first_name', 'middle_name', 'last_name', 'email', 
         'user_type', 'status', 'is_verified', 'is_required_profile_detail', 'is_printed',
         'nationality', 'date_of_birth', 'gsez_card_issue_date', 'gsez_card_expiry_date', 'gsezid',
-        'current_address', 'is_permanent', 'permanent_address', 
+        'profile_full_link', 'current_address', 'is_permanent', 'permanent_address', 
         'current_employer', 'current_employer_join_date', 'current_employer_emp_code', 
         'current_employer_designation', 'current_employer_department', 'current_employer_company',
         'current_employer_remarks', 'current_employer_rating',
@@ -1226,12 +1236,12 @@ def admin_export_users_template(request):
     
     # Helpful comments row (field requirements)
     comments = [
-        'Required', 'Required', 'Required', 'Optional', 'Required', 'Required',
+        'Optional (auto-generated if blank)', 'Optional (auto-generated if blank)', 'Optional', 'Optional', 'Optional', 'Optional',
         'Use: user/admin/hr/security', 'Use: active/inactive/blocked/terminated/under_surveillance', 
         'Use: 1/0', 'Use: 1/0', 'Use: 1/0',
         'Optional', 'Use: YYYY-MM-DD or DD/MM/YYYY', 'Use: YYYY-MM-DD or DD/MM/YYYY', 
         'Use: YYYY-MM-DD or DD/MM/YYYY', 'Optional (auto-generated if blank)',
-        'Optional', 'Use: 1/0', 'Optional',
+        'Optional (e.g. http://207.108.234.113:83/GSEZID.jpg)', 'Optional', 'Use: 1/0', 'Optional',
         'Optional', 'Use: YYYY-MM-DD or DD/MM/YYYY', 'Optional', 
         'Optional', 'Optional', 'Must exist in system',
         'Optional', 'Optional (number 1-5)',
@@ -1248,7 +1258,7 @@ def admin_export_users_template(request):
         'john_doe', 'password123', 'John', '', 'Doe', 'john@example.com',
         'user', 'active', '1', '1', '0',
         'Indian', '1990-01-01', '2023-01-01', '2025-01-01', '',
-        '123 Street, City', '0', '456 Street, City',
+        'http://207.108.234.113:83/ZIS2506000001.jpg', '123 Street, City', '0', '456 Street, City',
         'ACME Corp', '2022-01-01', 'EMP123', 
         'Developer', 'IT', 'Company Name',
         'Good employee', '4',
@@ -1265,7 +1275,7 @@ def admin_export_users_template(request):
         'jane_smith', 'pass456', 'Jane', 'M', 'Smith', 'jane@example.com',
         'user', 'active', '0', '1', '0',
         'American', '31/05/1992', '01.02.2023', '01-02-2025', '',
-        '789 Road, Town', '1', '789 Road, Town',
+        'http://207.108.234.113:83/ZIS2506000002.jpg', '789 Road, Town', '1', '789 Road, Town',
         'XYZ Ltd', '01/06/2021', 'XYZ456', 
         'Manager', 'HR', 'XYZ Company',
         'Excellent manager', '5',
@@ -1289,8 +1299,19 @@ def admin_import_users(request):
             return redirect('admin_import_users')
 
         try:
-            # Read CSV file
-            decoded_file = csv_file.read().decode('utf-8').splitlines()
+            # Read CSV file with error handling for different encodings
+            csv_data = csv_file.read()
+            try:
+                # First try UTF-8
+                decoded_file = csv_data.decode('utf-8').splitlines()
+            except UnicodeDecodeError:
+                try:
+                    # Then try ISO-8859-1 (Latin-1)
+                    decoded_file = csv_data.decode('latin-1').splitlines()
+                except UnicodeDecodeError:
+                    # Fall back to a more permissive encoding with error handling
+                    decoded_file = csv_data.decode('utf-8', errors='replace').splitlines()
+                    
             reader = csv.reader(decoded_file)
             headers = next(reader)  # Get header row
             next(reader, None)  # Skip the second row (instructions/comments)
@@ -1304,46 +1325,33 @@ def admin_import_users(request):
             
             # Debug field indices to help troubleshoot
             missing_required_fields = []
-            required_fields = ['username', 'password', 'first_name', 'last_name', 'email']
-            for field in required_fields:
-                if field not in field_indices:
-                    missing_required_fields.append(field)
-            
-            if missing_required_fields:
-                messages.error(request, f"Required fields missing in CSV header: {', '.join(missing_required_fields)}")
-                messages.warning(request, f"CSV headers found: {', '.join(headers)}")
-                return redirect('admin_import_users')
+            # No required fields - all fields are optional
             
             success_count = 0
             error_count = 0
             error_details = []
             
             for row_num, row in enumerate(reader, start=3):  # Start at 3 to account for header and instruction rows
-                if not row or len(row) < 5:  # Skip empty rows or rows with insufficient data
-                    error_details.append(f"Row {row_num}: Insufficient data (fewer than 5 columns)")
+                if not row:  # Skip empty rows
+                    error_details.append(f"Row {row_num}: Empty row")
                     error_count += 1
                     continue
                 
                 try:
-                    # Extract basic required fields
-                    username = row[field_indices['username']].strip() if field_indices['username'] < len(row) else ''
-                    password = row[field_indices['password']].strip() if field_indices['password'] < len(row) else ''
-                    first_name = row[field_indices['first_name']].strip() if field_indices['first_name'] < len(row) else ''
-                    last_name = row[field_indices['last_name']].strip() if field_indices['last_name'] < len(row) else ''
-                    email = row[field_indices['email']].strip() if field_indices['email'] < len(row) else ''
+                    # Extract basic fields
+                    username = row[field_indices.get('username', 0)].strip() if 'username' in field_indices and field_indices['username'] < len(row) else ''
+                    password = row[field_indices.get('password', 0)].strip() if 'password' in field_indices and field_indices['password'] < len(row) else ''
+                    first_name = row[field_indices.get('first_name', 0)].strip() if 'first_name' in field_indices and field_indices['first_name'] < len(row) else ''
+                    last_name = row[field_indices.get('last_name', 0)].strip() if 'last_name' in field_indices and field_indices['last_name'] < len(row) else ''
+                    email = row[field_indices.get('email', 0)].strip() if 'email' in field_indices and field_indices['email'] < len(row) else ''
                     
-                    # Check if required fields are present
-                    missing_fields = []
-                    if not username: missing_fields.append('username')
-                    if not password: missing_fields.append('password')
-                    if not first_name: missing_fields.append('first_name')
-                    if not last_name: missing_fields.append('last_name') 
-                    if not email: missing_fields.append('email')
+                    # Generate username if not provided
+                    if not username:
+                        username = generate_gsezid()
                     
-                    if missing_fields:
-                        error_details.append(f"Row {row_num}: Missing required fields: {', '.join(missing_fields)}")
-                        error_count += 1
-                        continue
+                    # Generate random password if not provided
+                    if not password:
+                        password = User.objects.make_random_password()
                     
                     # Check if user already exists
                     if User.objects.filter(username=username).exists():
@@ -1380,7 +1388,7 @@ def admin_import_users(request):
                         'middle_name', 'nationality', 'gsezid', 'current_address',
                         'permanent_address', 'current_employer', 'current_employer_emp_code',
                         'current_employer_designation', 'current_employer_department',
-                        'current_employer_remarks'
+                        'current_employer_remarks', 'profile_full_link'
                     ]
                     
                     for field in optional_text_fields:
@@ -1584,7 +1592,6 @@ def admin_import_users(request):
                     success_count += 1
                     
                 except Exception as e:
-                    error_details.append(f"Row {row_num}: Unexpected error: {str(e)}")
                     error_count += 1
             
             # Display success and errors
@@ -1635,8 +1642,19 @@ def admin_import_companies(request):
             return redirect('admin_manage_companies')
 
         try:
-            # Read csv file
-            decoded_file = csv_file.read().decode('utf-8').splitlines()
+            # Read CSV file with error handling for different encodings
+            csv_data = csv_file.read()
+            try:
+                # First try UTF-8
+                decoded_file = csv_data.decode('utf-8').splitlines()
+            except UnicodeDecodeError:
+                try:
+                    # Then try ISO-8859-1 (Latin-1)
+                    decoded_file = csv_data.decode('latin-1').splitlines()
+                except UnicodeDecodeError:
+                    # Fall back to a more permissive encoding with error handling
+                    decoded_file = csv_data.decode('utf-8', errors='replace').splitlines()
+            
             reader = csv.reader(decoded_file)
             next(reader)  # Skip header row
 
@@ -1786,6 +1804,7 @@ def user_documents(request):
 # HR Dashboard
 @login_required
 @user_passes_test(is_hr)
+@check_hr_security_access
 def hr_dashboard(request):
     company = request.user.current_employer_company
     users_in_company = User.objects.filter(current_employer_company=company).count() if company else 0
@@ -1797,6 +1816,7 @@ def hr_dashboard(request):
 
 @login_required
 @user_passes_test(is_hr)
+@check_hr_security_access
 def hr_profile(request):
     if request.method == 'POST':
         form = UserProfileForm(request.POST, request.FILES, instance=request.user)
@@ -1833,6 +1853,7 @@ def hr_profile(request):
 
 @login_required
 @user_passes_test(is_hr)
+@check_hr_security_access
 def hr_manage_company(request):
     company = request.user.current_employer_company
     
@@ -1852,6 +1873,7 @@ def hr_manage_company(request):
 
 @login_required
 @user_passes_test(is_hr)
+@check_hr_security_access
 def hr_manage_jobs(request):
     # In a real application, you would have a Job model
     # For now, let's simulate some job data
@@ -1878,6 +1900,7 @@ def hr_manage_jobs(request):
 
 @login_required
 @user_passes_test(is_hr)
+@check_hr_security_access
 def hr_job_inquiries(request):
     # In a real application, you would have a JobApplication model
     # For now, let's simulate some application data
@@ -1915,11 +1938,13 @@ def hr_job_inquiries(request):
 # Security Dashboard
 @login_required
 @user_passes_test(is_security)
+@check_hr_security_access
 def security_dashboard(request):
     return render(request, 'core/security/dashboard.html')
 
 @login_required
 @user_passes_test(is_security)
+@check_hr_security_access
 def security_profile(request):
     if request.method == 'POST':
         form = UserProfileForm(request.POST, request.FILES, instance=request.user)
@@ -1956,6 +1981,7 @@ def security_profile(request):
 
 @login_required
 @user_passes_test(is_security)
+@check_hr_security_access
 def security_add_user(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST, request.FILES)
@@ -1998,6 +2024,7 @@ def security_add_user(request):
 
 @login_required
 @user_passes_test(is_security)
+@check_hr_security_access
 def security_scan_qr(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -2058,109 +2085,50 @@ def home_view(request):
 @login_required
 @user_passes_test(is_admin)
 def admin_edit_security(request, user_id):
+    if are_hr_security_disabled():
+        messages.warning(request, 'Security management is currently disabled.')
+        return redirect('admin_dashboard')
+        
     # Get the user to edit
-    user_obj = get_object_or_404(User.objects.filter(user_type='security'), id=user_id)
+    user = get_object_or_404(User, pk=user_id, user_type='security')
     
     if request.method == 'POST':
-        form = AdminUserEditForm(request.POST, request.FILES, instance=user_obj)
-        
-        # Check allow_login status
-        allow_login = request.POST.get('allow_login') == 'true'
-        
-        # Check for password change
-        password1 = request.POST.get('password1', '')
-        password2 = request.POST.get('password2', '')
-        
+        form = AdminUserEditForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
-            user = form.save(commit=False)
-            
-            # Set is_active based on allow_login
-            user.is_active = allow_login
-            
-            # Set new password if provided
-            if password1 and password2 and password1 == password2:
-                user.set_password(password1)
-            elif password1 or password2:  # Only one password field is filled
-                messages.warning(request, 'Both password fields must match to change password. Password not updated.')
-            
-            # Ensure user type remains 'security'
-            user.user_type = 'security'
-            
-            user.save()
-            
-            password_msg = " Password was updated." if password1 and password2 and password1 == password2 else ""
-            login_status = "with login access" if allow_login else "without login access"
-            messages.success(request, f'Security staff updated successfully {login_status}.{password_msg}')
+            form.save()
+            messages.success(request, f'Security personnel {user.get_full_name()} updated successfully.')
             return redirect('admin_manage_security')
     else:
-        form = AdminUserEditForm(instance=user_obj)
+        form = AdminUserEditForm(instance=user)
     
     return render(request, 'core/admin/edit_security.html', {
-        'user_obj': user_obj,
         'form': form,
-        'is_security_staff': True
+        'user': user
     })
 
 # Admin edit HR staff
 @login_required
 @user_passes_test(is_admin)
 def admin_edit_hr(request, user_id):
+    if are_hr_security_disabled():
+        messages.warning(request, 'HR management is currently disabled.')
+        return redirect('admin_dashboard')
+        
     # Get the user to edit
-    user_obj = get_object_or_404(User.objects.filter(user_type='hr'), id=user_id)
+    user = get_object_or_404(User, pk=user_id, user_type='hr')
     
     if request.method == 'POST':
-        form = AdminUserEditForm(request.POST, request.FILES, instance=user_obj)
-        
-        # Check allow_login status
-        allow_login = request.POST.get('allow_login') == 'true'
-        
-        # Check for password change
-        password1 = request.POST.get('password1', '')
-        password2 = request.POST.get('password2', '')
-        
-        # Get company assignment
-        company_id = request.POST.get('company')
-        
+        form = AdminUserEditForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
-            user = form.save(commit=False)
-            
-            # Set is_active based on allow_login
-            user.is_active = allow_login
-            
-            # Set new password if provided
-            if password1 and password2 and password1 == password2:
-                user.set_password(password1)
-            elif password1 or password2:  # Only one password field is filled
-                messages.warning(request, 'Both password fields must match to change password. Password not updated.')
-            
-            # Ensure user type remains 'hr'
-            user.user_type = 'hr'
-            
-            # Update company association if provided
-            if company_id:
-                try:
-                    company = Company.objects.get(id=company_id)
-                    user.current_employer_company = company
-                except Company.DoesNotExist:
-                    messages.warning(request, f'Company with ID {company_id} not found. Company not updated.')
-            
-            user.save()
-            
-            password_msg = " Password was updated." if password1 and password2 and password1 == password2 else ""
-            login_status = "with login access" if allow_login else "without login access"
-            messages.success(request, f'HR staff updated successfully {login_status}.{password_msg}')
+            form.save()
+            messages.success(request, f'HR personnel {user.get_full_name()} updated successfully.')
             return redirect('admin_manage_hr')
     else:
-        form = AdminUserEditForm(instance=user_obj)
-    
-    # Get all companies for selection
-    companies = Company.objects.all()
+        form = AdminUserEditForm(instance=user)
     
     return render(request, 'core/admin/edit_hr.html', {
-        'user_obj': user_obj,
         'form': form,
-        'companies': companies,
-        'is_hr_staff': True
+        'user': user
     })
 
 @login_required
@@ -2206,8 +2174,19 @@ def admin_import_documents(request):
             return redirect('admin_import_documents')
 
         try:
-            # Read csv file
-            decoded_file = csv_file.read().decode('utf-8').splitlines()
+            # Read CSV file with error handling for different encodings
+            csv_data = csv_file.read()
+            try:
+                # First try UTF-8
+                decoded_file = csv_data.decode('utf-8').splitlines()
+            except UnicodeDecodeError:
+                try:
+                    # Then try ISO-8859-1 (Latin-1)
+                    decoded_file = csv_data.decode('latin-1').splitlines()
+                except UnicodeDecodeError:
+                    # Fall back to a more permissive encoding with error handling
+                    decoded_file = csv_data.decode('utf-8', errors='replace').splitlines()
+            
             reader = csv.reader(decoded_file)
             next(reader)  # Skip header row
 
@@ -2252,7 +2231,7 @@ def admin_import_documents(request):
                         'middle_name', 'nationality', 'gsezid', 'current_address',
                         'permanent_address', 'current_employer', 'current_employer_emp_code',
                         'current_employer_designation', 'current_employer_department',
-                        'current_employer_remarks'
+                        'current_employer_remarks', 'profile_full_link'
                     ]
                     
                     for field in optional_text_fields:
